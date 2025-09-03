@@ -1,0 +1,94 @@
+---
+title: "Homework 1"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+2.1)
+
+```{r,echo=FALSE}
+occupation_data = matrix(c(.018,.002,.001,.001,.001,.035,
+                           .112,.066,.018,.029,.031,.064,.094,.019,
+                           .032, .008, .032, .032,.010, .043, .018,
+                           .069,.084, .051, .13),nrow = 5, ncol = 5)
+
+occupation_labels <- c("farm","operatives","craftsmen","sales",
+                               "professional")
+
+rownames(occupation_data) <- c("farm","operatives","craftsmen","sales",
+                               "professional")
+colnames(occupation_data) <- c("farm","operatives","craftsmen","sales",
+                               "professional")
+
+```
+
+a\)
+
+$$
+p_{Y_{1}}(y_1)= \sum_{y_2 \in Y_2} p_{Y_1,Y_2}(y_1,y_2)
+$$
+
+Which leaves us with the marginal probability distribution of the father being:
+
+```{r}
+father_marginal_distribution <- rowSums(occupation_data)
+names(father_marginal_distribution) <- occupation_labels
+father_marginal_distribution
+```
+
+b\)
+
+Similarly we have:
+
+$$
+p_{Y_2}(y_2)=\sum_{y_{1} \in Y_1}p_{Y_1,Y_2}(y_1,y_2)
+$$
+
+Which leaves us with the marginal probability distribution of the son being:
+
+```{r}
+son_marginal_distribution <- colSums(occupation_data)
+names(son_marginal_distribution) <- occupation_labels
+son_marginal_distribution
+```
+
+c\)
+
+The conditional distribution of a son's occupation given that the father is a farmer is:
+
+$$
+p_{Y_2|Y_{1}}(y_2|y_1=\text{farmer})=\frac{Pr(\{Y_{1}=\text{farmer\} } \cap\{Y_{2}=y_2\})}{Pr(Y_{1} = \text{farmer})}
+$$
+
+```{r}
+occupation_data["farm",]/father_marginal_distribution["farm"]
+```
+
+d\)
+
+The conditional distribution of a father's occupation given that the son is a farmer is:
+
+$$
+p_{Y_1|Y_2}(y_1|y_{2}= \text{farmer})=\frac{Pr(\{Y_{1}=y_1 \}\cap \{ Y_{2}=\text{farmer}\}}{Pr(Y_2 = \text{farmer})}
+$$
+
+```{r}
+occupation_data[,"farm"]/son_marginal_distribution["farm"]
+```
+
+2.2)
+
+Since the two random variables are independent we have:
+
+a\)
+
+$$
+E[a_1Y_1+a_2Y_2]=a_1 \mu_1+a_2\mu_2 \quad Var(a_1 Y_1+a_2 Y_2)=a_1^2 \sigma_1^2+a_2^2+\sigma_2^2
+$$
+
+b\)
+
+$$
+E[a_1Y_1-a_2Y_2]=a_1 \mu_1-a_2\mu_2 \quad Var(a_1 Y_1-a_2 Y_2)=a_1^2 \sigma_1^2+a_2^2+\sigma_2^2
+$$
