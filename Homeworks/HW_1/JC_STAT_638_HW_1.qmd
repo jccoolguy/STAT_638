@@ -172,3 +172,39 @@ Pr(X =0|Y=1)=\frac{Pr(\{X=0\}\cap\{Y=1\})}{Pr(Y=1)}=\frac{.3}{.5}=.6
 $$
 
 Given the ball is green the probability the ball turned up tails is .6.
+
+2.6)
+
+We have $A \perp B|C$, so we know:
+
+$$
+P(A|B \cap C)=Pr(A|C)
+$$
+
+To show that this implies $A^c \perp B|C$ we use the law of total probability, $P(A|B \cap C)+P(A^c|B \cap C)=1$ on the left and $Pr(A|C)+Pr(A^c|C)=1$ on the right. So:
+
+$$
+1-Pr(A^c|B\cap C)=1-Pr(A^c|C)
+$$
+
+$$
+Pr(A^c|B \cap C)=Pr(A^c |C)
+$$
+
+Thus showing that $A^c$ and $B$ are conditionally independent given C.
+
+Similarly we can show that this implies $A \perp B^c|C$:
+
+$$
+Pr(B|A \cap C)=Pr(B|C)
+$$
+
+$$
+1-Pr(B^c|A \cap C)=1-Pr(B^c|C)
+$$
+
+$$
+Pr(B^c|A \cap C)=Pr(B^c|C)
+$$
+
+Thus showing that $A$ and $B^c$ are conditionally independent given C.
