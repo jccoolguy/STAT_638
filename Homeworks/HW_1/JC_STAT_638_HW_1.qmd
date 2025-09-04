@@ -92,3 +92,83 @@ b\)
 $$
 E[a_1Y_1-a_2Y_2]=a_1 \mu_1-a_2\mu_2 \quad Var(a_1 Y_1-a_2 Y_2)=a_1^2 \sigma_1^2+a_2^2+\sigma_2^2
 $$
+
+2.5)
+
+a\)
+
+|                 |              |              |
+|-----------------|--------------|--------------|
+| $p_{X,Y}(x,y)$  | Green, Y = 1 | Red, Y = 0   |
+| Heads, X = 1    | .2           | .3           |
+| Tails, X = 0    | .3           | .2           |
+
+b\)
+
+$$
+E[Y]=\sum_{y \in Y}\sum_{x \in X}y (p_{X,Y}(x,y))=1(.2)+0(.3)+1(.3)+(0)(.2)=.5
+$$
+
+The probability the ball is green is .5.
+
+c\)
+
+$$
+Var(Y|X=0)=E[Y^2|X=0]-(E[Y|X=0])^2
+$$
+
+To find these expected values we must find the conditional probability distribution, $p_{Y|X}(y|x)$. We get this by applying the usual formula:
+
+$$
+p_{Y|X}(y|x)=\frac{Pr(\{Y=y\} \cap \{X =x \})}{Pr(X=x)}
+$$
+
+That leaves us with:
+
+|                 |              |              |
+|-----------------|--------------|--------------|
+| $p_{Y|X}(y|x)$  | Green, Y = 1 | Red, Y = 0   |
+| Heads, X = 1    | .4           | .6           |
+| Tails, X = 0    | .6           | .4           |
+
+Using this we can calculate $Var(Y|X=0)$:
+
+$$
+Var(Y|X=0)=[1^2(.6)+0^2(.4)]-[1(.6)+0(.4)]^2=.6-.36=.24
+$$
+
+Similarly we calculate $Var(Y|X = 1)$:
+
+$$
+Var(Y|X = 1)=[1^2(.4)+0^2(.6)]-[1(.4)+0(.6)]^2=.4-.16=.24
+$$
+
+For $Var(Y)$ we have:
+
+$$
+Var(Y)=E[Y^2]-(E[Y])^2
+$$
+
+We already found $E[Y]$ being .5.
+
+$$
+E[Y^2]=\sum_{y \in Y} y^2 p_{X,Y}(x,y)=1^2(.2)+0^2(.3)+1^2(.3)+0^2(.2)=.5
+$$
+
+So we have:
+
+$$
+Var(Y)=.5-.5^2=.25
+$$
+
+Intuitively it makes sense that $Var(Y)$ has higher variance than the others, the coin flip determines the choice of urn to draw from. When we fix the result of the coin flip we have greater certainty about whether we will obtain a green or red ball.
+
+d\)
+
+We have:
+
+$$
+Pr(X =0|Y=1)=\frac{Pr(\{X=0\}\cap\{Y=1\})}{Pr(Y=1)}=\frac{.3}{.5}=.6
+$$
+
+Given the ball is green the probability the ball turned up tails is .6.
