@@ -97,11 +97,11 @@ $$
 
 a\)
 
-|                 |              |              |
-|-----------------|--------------|--------------|
-| $p_{X,Y}(x,y)$  | Green, Y = 1 | Red, Y = 0   |
-| Heads, X = 1    | .2           | .3           |
-| Tails, X = 0    | .3           | .2           |
+|                |              |            |
+|----------------|--------------|------------|
+| $p_{X,Y}(x,y)$ | Green, Y = 1 | Red, Y = 0 |
+| Heads, X = 1   | .2           | .3         |
+| Tails, X = 0   | .3           | .2         |
 
 b\)
 
@@ -125,11 +125,11 @@ $$
 
 That leaves us with:
 
-|                 |              |              |
-|-----------------|--------------|--------------|
-| $p_{Y|X}(y|x)$  | Green, Y = 1 | Red, Y = 0   |
-| Heads, X = 1    | .4           | .6           |
-| Tails, X = 0    | .6           | .4           |
+|                |              |            |
+|----------------|--------------|------------|
+| $p_{Y|X}(y|x)$ | Green, Y = 1 | Red, Y = 0 |
+| Heads, X = 1   | .4           | .6         |
+| Tails, X = 0   | .6           | .4         |
 
 Using this we can calculate $Var(Y|X=0)$:
 
@@ -208,3 +208,25 @@ Pr(B^c|A \cap C)=Pr(B^c|C)
 $$
 
 Thus showing that $A$ and $B^c$ are conditionally independent given C.
+
+To show that this implies $A^c \perp B^c |C$ we need to show that $Pr(A^{c} \cap B^c|C)=Pr(A^c|C)Pr(B^c|C)$.
+
+The first step relies on the De Morgan's rule:
+
+$$
+Pr(A^c \cap B^c|C)=Pr((A \cup B)^c|C)=1-Pr(A \cup B|C)
+$$
+
+$$
+1-Pr( A \cup B|C)=1-(Pr(A|C)+Pr(B|C)-Pr(A \cap B|C))
+$$
+
+From there we use the fact that $A$ and $B$ are conditionally independent given $C$:
+
+$$
+= 1-(Pr(A|C)+Pr(B|C)-Pr(A|C)Pr(B|C))=(1-Pr(A|C))(1-Pr(B|C))=Pr(A^c|C)Pr(B^c|C)
+$$
+
+So we have shown $Pr(A^c \cap B^c|C)=Pr(A^c|C)Pr(B^c|C)$ which demonstrates that $A^c \perp B^c |C$ is true given $A\perp B|C$.
+
+An example showing that $A \perp B|C$ holds but $A \perp B|C^c$ does not hold is as follows:
