@@ -1,5 +1,5 @@
 ---
-title: "Homework 1"
+title: "STAT 638 Homework 1"
 author: "Jack Cunningham"
 format: pdf
 editor: visual
@@ -92,6 +92,60 @@ b\)
 $$
 E[a_1Y_1-a_2Y_2]=a_1 \mu_1-a_2\mu_2 \quad Var(a_1 Y_1-a_2 Y_2)=a_1^2 \sigma_1^2+a_2^2+\sigma_2^2
 $$
+
+2.3)
+
+a\)
+
+$p(x|y,z) =\frac{Pr(\{x=x_x\} \cap \{y=y_1\} \cap \{z=z_1\})}{Pr(y=y_1 \cap z=z_1)} =\frac{p(x,y,z)}{p(y,z)}$
+
+To find $p(y,z)$ we sum over all x:
+
+$p(y,z)=\sum_{x \in X} p(x,y,z)\propto g(y,z)h(z)\sum_{x \in X} f(x,z)$
+
+Then we have:
+
+$$
+p(x|y,z)\propto\frac{p(x,y,z)}{g(y,z)h(z) \sum_{x \in X}f(x,z)} \propto\frac{f(x,z)g(y,z)h(z)}{g(y,z)h(z) \sum_{x \in}f(x,z)}\propto\frac{f(x,z)}{\sum_{x\in X}f(x,z)}
+$$
+
+Thus we have shown that $p(x|y,z)$ is a function of x and z.
+
+b\)
+
+$p(y|x,z) =\frac{p(x,y,z)}{p(x,z)}$
+
+To find $p(x,z)$ we sum over all y:
+
+$p(x,z)\propto\sum_{y \in Y} f(x,z)g(y,z)h(z) \propto f(x,z)h(z) \sum_{y \in Y}g(y,z)$
+
+Then:
+
+$$
+p(y|x,z)\propto \frac{f(x,z)g(y,z)h(z)}{f(x,z)h(z)\sum_{y \in Y}g(y,z)} \propto \frac{g(y,z)}{\sum_{y \in Y}g(y,z)}
+$$
+
+So $p(y|x,z)$ is a function of y and z.
+
+c\)
+
+We start with the below, which is always true:
+
+$$
+Pr(X \cap Y|Z)=Pr(X|Z)Pr(Y|X \cap Z)
+$$
+
+Then, to show conditional independence all we need to show is that:
+
+$$
+Pr(Y|X \cap Z)=P(Y|Z)
+$$
+
+And since we have shown that $p(y|x,z)$ only depends on y and z we can say that $P(Y|X,Z)=P(Y|Z)$. Then we have:
+
+$$
+Pr(X\cap Y|Z)=P(X|Z)P(Y|Z)
+$$Which demonstrates conditional independence between $X$ and $Y$ given $Z$ .
 
 2.5)
 
@@ -230,3 +284,33 @@ $$
 So we have shown $Pr(A^c \cap B^c|C)=Pr(A^c|C)Pr(B^c|C)$ which demonstrates that $A^c \perp B^c |C$ is true given $A\perp B|C$.
 
 An example showing that $A \perp B|C$ holds but $A \perp B|C^c$ does not hold is as follows:
+
+For $A \perp B|C$ to hold we have $P(A \cap B|C)=P(A|C)P(B|C)$.
+
+Let's assign the probability of $A$ given $C$ is .25 and the probability of $B$ given $C$ is also .25. Lets also say that the probability of event $C$ is .5.
+
+Then we have:
+
+$$
+\frac{P(A\cap B\cap C)}{P(C)}=P(A|C)P(B|C)=.125
+$$
+
+And:
+
+$$
+\frac{P(A \cap B \cap C^c)}{P(C^c)}=P(A \cap B |C^c)
+$$
+
+All we need is to show that in general:
+
+$$
+\frac{P(A \cap B \cap C^c)}{P(C^c)} \neq P(A|C^c)P(B|C^c)
+$$
+
+So if we choose $P(A|C^c)=.1$ and $P(B|C^c)=.2$ and $P(A \cap B|C^c)=.05$ and $P(C^c)=.5$ then:
+
+$$
+\frac{.05}{.5}\neq(.1)(.2)
+$$
+
+Thus showing that $A \perp B|C$ does not imply $A \perp B|C^c$.
