@@ -201,19 +201,123 @@ df |>
 p_a = a + y
 p_b = b + n - y
 p_mode = (p_a - 1)/((p_a - 1) + (p_b - 1))
-p_exp = posterior_a/(posterior_a + posterior_b)
+p_exp = p_a/(p_a + p_b)
 p_sd = sqrt(p_a*p_b/((p_a+p_b+1)*(p_a+p_b)^2))
 ```
 
-| Mean                | Mode                 | Standard Dev      |
-|---------------------|----------------------|-------------------|
-| `r round(p_exp,3)`  | `r round(p_mode,3)`  | `r round(p_sd,3)` |
+| Mean               | Mode                | Standard Dev      |
+|--------------------|---------------------|-------------------|
+| `r round(p_exp,3)` | `r round(p_mode,3)` | `r round(p_sd,3)` |
 
 ```{r}
 p_int = qbeta(c(.025,.975), p_a, p_b)
 ```
 
 The 95% confidence interval for $\theta$ is (`r round(p_int[1],3)`,`r round(p_int[2],3)`)
+
+b\)
+
+```{r}
+a_2 = 8
+b_2 = 2
+p_theta_2 = dbeta(theta, a_2, b_2)
+p_y_theta_2 = dbinom(y, n, theta)
+p_theta_y_2 = dbeta(theta, a_2 + y, b_2 + n - y)
+df_2 = tibble(theta,p_theta_2,p_y_theta_2,p_theta_y_2)
+```
+
+Plotting:
+
+```{r}
+par(mfrow= c(2,2))
+df_2 |> 
+  ggplot(aes(x = theta, y = p_theta_2)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(theta)")
+df_2 |> 
+  ggplot(aes(x = theta, y = p_y_theta_2)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(y|theta)")
+df_2 |> 
+  ggplot(aes(x = theta, y = p_theta_y_2)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(theta|y)")
+```
+
+```{r}
+p_a_2 = a_2 + y
+p_b_2 = b_2 + n - y
+p_mode_2 = (p_a_2 - 1)/((p_a_2 - 1) + (p_b_2 - 1))
+p_exp_2 = p_a_2/(p_a_2 + p_b_2)
+p_sd_2 = sqrt(p_a_2*p_b_2/((p_a_2+p_b_2+1)*(p_a_2+p_b_2)^2))
+```
+
+| Mean                  | Mode                   | Standard Dev        |
+|-----------------------|------------------------|---------------------|
+| `r round(p_exp_2,3)`  | `r round(p_mode_2,3)`  | `r round(p_sd_2,3)` |
+
+```{r}
+p_int_2 = qbeta(c(.025,.975), p_a_2, p_b_2)
+```
+
+The 95% confidence interval for $\theta$ is (`r round(p_int_2[1],3)`,`r round(p_int_2[2],3)`)
+
+c\)
+
+```{r}
+p_theta_mix = function(theta){
+  return(1/4*(gamma(10)/(gamma(2)*gamma(8)))*(3*theta*(1-theta)^7 + 
+                                                theta^7*(1-theta)))
+}
+p_theta_mix_seq = p_theta_mix(theta)
+df_3 = tibble(theta,p_theta_mix_seq)
+df_3 |> 
+  ggplot(aes(x = theta, y = p_theta_mix_seq)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "Mixture Prior")
+```
+
+This prior distribution takes aspects from the priors in a and b. The two peaks are in the same location as a and b, with more weight being placed on the prior in part a (beta(2,8)). This prior could be used to express the opinion that there is either a low proportion of re-offenders or a high proportion, with little chance of the proportion being in between.
+
+d\)
+
+i\)
+
+We have $p(y|\theta)=\theta^{15}(1-\theta)^{28}$ so:
+
+$$
+p(\theta)p(y|\theta)=\frac{3}{4}\frac{\Gamma(10)}{\Gamma(2) \Gamma(8)} \theta^{16}(1-\theta)^{35} + \frac{1}{4} \frac{\Gamma(10)}{\Gamma(2) \Gamma(8)} \theta^{22}(1-\theta)^{29}
+$$
+
+ii\)
+
+We can identify this as being proportional to $\frac{3}{4} \text{beta(17,36)}+\frac{1}{4}\text{beta}(23,30)$.
+
+iii\)
+
+```{r}
+p_post = function(theta){
+  return(1/4*(gamma(10)/(gamma(2)*gamma(8)))*(3*theta^(16)*(1-theta)^(35) + 
+                                                theta^(22)*(1-theta)^(29)))}
+p_post_seq = p_post(theta)
+df_4 = tibble(theta, p_post_seq)
+df_4 |> 
+  ggplot(aes(x = theta, y = p_post_seq)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "Mixed Dist p(theta) x p(y|theta)")
+```
+
+The approximate posterior mode is `r theta[which.max(p_post_seq)]`.
+
+The mode is close to the mode from the beta(2,8) prior, this makes sense because the data favors a value of $\theta < .5$ and we have more weight placed on the beta(2,8) than beta(8,2).
+
+e\)
+
+A general formula would be:
+
+$$
+w_i \text{gamma}(a_1+\sum_{i=1}^n y_i,
+$$
 
 3.7)
 
