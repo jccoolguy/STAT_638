@@ -155,10 +155,65 @@ df = tibble(y_b_n_seq, y_b_n_posterior_exp_seq)
 df |> 
   ggplot(aes(y_b_n_seq, y_b_n_posterior_exp_seq)) +
   geom_point() +
-  geom_abline(b = y_a_posterior_exp)
+  geom_vline(xintercept = y_a_posterior_exp, col = "red") +
+  labs(x = "n 0", y = "Posterior expected value of Theta B")
 ```
 
+In order for the posterior expectation of $\theta_B$ to be close to that of $\theta_A$ would be a prior of $\text{gamma}((12)(17),17)$. That prior distribution has an expected value of 12 with a strong weight being placed on the prior distribution (the equivalent of 17 prior observations with a mean of 12).
+
+d\)
+
+Knowledge about population A mice could be used to tell us something about population B mice, but we would have to be careful not to overstate how related the two populations are. I think it makes good sense to consider the two populations independent in an initial analysis (as we have by assuming $p(\theta_A,\theta_B)=p(\theta_A) \times p (\theta_B)$.
+
 3.4)
+
+```{r}
+n = 43
+y = 15
+a = 2
+b = 8
+theta = seq(0,1,.005)
+p_theta = dbeta(theta, a, b)
+p_y_theta = dbinom(y, n, theta)
+p_theta_y = dbeta(theta, a + y, b + n - y)
+df = tibble(theta,p_theta,p_y_theta,p_theta_y)
+```
+
+Plotting:
+
+```{r}
+par(mfrow= c(2,2))
+df |> 
+  ggplot(aes(x = theta, y = p_theta)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(theta)")
+df |> 
+  ggplot(aes(x = theta, y = p_y_theta)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(y|theta)")
+df |> 
+  ggplot(aes(x = theta, y = p_theta_y)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "p(theta|y)")
+```
+
+```{r}
+p_a = a + y
+p_b = b + n - y
+p_mode = (p_a - 1)/((p_a - 1) + (p_b - 1))
+p_exp = posterior_a/(posterior_a + posterior_b)
+p_sd = sqrt(p_a*p_b/((p_a+p_b+1)*(p_a+p_b)^2))
+```
+
+| Mean                | Mode                 | Standard Dev      |
+|---------------------|----------------------|-------------------|
+| `r round(p_exp,3)`  | `r round(p_mode,3)`  | `r round(p_sd,3)` |
+
+```{r}
+p_int = qbeta(c(.025,.975), p_a, p_b)
+```
+
+The 95% confidence interval for $\theta$ is (`r round(p_int[1],3)`,`r round(p_int[2],3)`)
 
 3.7)
 
