@@ -1,0 +1,165 @@
+---
+title: "STAT 638 HW 2"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+```{r}
+library(tidyverse)
+```
+
+3.1)
+
+a\)
+
+$$
+Pr(Y_1=y_1,...,Y_{100}=y_{100}|\theta)=\theta^{\sum_{i=1}^{100}y_i}(1-\theta)^{100-\sum_{i=1}^{100}y_i}
+$$
+
+$$
+Pr(\sum Y_i =y|\theta)={100 \choose y}\theta^y(1-\theta)^{100-y}
+$$
+
+b\)
+
+```{r}
+theta = seq(0,1,.1)
+y_sum = 57
+n = 100
+pr = dbinom(y_sum, size = 100,prob = theta)
+df = tibble(theta,pr)
+df
+ggplot(df,aes(x = theta, y = pr)) +
+  geom_col(width = .025) +
+  labs(x = "Theta", y = "Probability")
+```
+
+c\)
+
+We have:
+
+$$
+p(\theta|\sum_{i=1}^{100}Y_i = 57)=\frac{Pr(\theta=\theta_i)Pr(\sum_{i=1}^{100}y_i=57|\theta_i)}{Pr(\sum_{i=1}^{57}Y_i=57)}
+$$
+
+We can't find $Pr(\sum_{i=1}^{57}Y_i=57)$ directly, but we can say that $Pr(\theta=\theta_i)Pr(\sum_{i=1}^{100}y_i=57|\theta_i)$ is proportional to the sampling probability. So we can find those values, and then find the constant that allows for the probabilities to sum to 1.
+
+Since we are assuming $Pr(\theta=\theta_i)$ is the same for all $\theta=0,.1,...,1$ we can say that $Pr(\theta = 0,.1,.2,...,1)=1/11$.
+
+```{r}
+df <- df |> 
+  mutate(post_precorrection = 1/11*pr)
+p_sum = sum(df$post_precorrection)
+df <- df |> 
+  mutate(posterior = post_precorrection*1/p_sum)
+ggplot(df,aes(x = theta, y = posterior)) +
+  geom_col(width = .025) +
+  labs(x = "Theta", y = "Probability", title = "Posterior")
+```
+
+d\)
+
+Using the same idea, but this time with a uniform prior for $\theta$ we have:
+
+$$
+p(\theta) \times Pr(\sum_{i=1}^{100}Y_i =57|\theta)=1 \times Pr(\sum_{i=1}^{100}Y_i = 57|\theta)
+$$
+
+```{r}
+theta_2 <- seq(0,1,.005)
+pr_2 <- dbinom(y_sum, size = 100,prob = theta_2)
+df_2 <- tibble(theta_2,pr_2)
+ggplot(df_2, aes(theta_2, pr_2)) +
+  geom_line() +
+  labs(x = "theta", y = "")
+```
+
+e\)
+
+```{r}
+df_2 <- df_2 |> 
+  mutate(true_post = dbeta(theta_2, 1 + 57, 1 + 100 - 57))
+df_2 |> 
+  ggplot(aes(x = theta_2, y = true_post)) +
+  geom_line() +
+  labs(x = "theta", y = "", title = "True Posterior")
+```
+
+All the plots peak around the same area, but there are differences. When we assumed that $\theta$ had the same probability on $\theta=0,.1,...,1$ and no probability elsewhere we are saying $\theta$ is a discrete random variable. As such we get back a posterior distribution that is a PMF. When we assume $\theta$ has a uniform distribution we get back a PDF. The differences between each group is the height on the y-axis. In some plots we are only looking at values proportional to the true posterior distribution. However, if our goal was to choose a particular $\theta$ that height wouldn't impact our decision.
+
+3.3)
+
+```{r}
+y_a = c(12,9,12,14,13,13,15,8,15,6)
+y_b = c(11,11,10,9,9,8,7,10,6,8,8,9,7)
+```
+
+a\)
+
+We know that given a Gamma prior and a sampling distribution of Poisson we have:
+
+$$
+\text{gamma}(a + \sum_{i=1}^nY_i,b+n)
+$$
+
+```{r}
+# A
+y_a_sum = sum(y_a)
+y_a_n = 10
+y_a_a = 120
+y_a_b = 10
+y_a_posterior = c(y_a_a + y_a_sum, y_a_b + y_a_n)
+
+# B
+y_b_sum = sum(y_b)
+y_b_n   = 13
+y_b_a   = 12
+y_b_b   = 1
+y_b_posterior = c(y_b_a + y_b_sum, y_b_b + y_b_n)
+```
+
+The posterior distribution of type A is $\text{gamma}(237,20)$ and type B is $\text{gamma}(125,14)$.
+
+The expected value and variance of the posterior is:
+
+$$
+E[\theta]=\frac{a}{b},Var[\theta]=\frac{a}{b^2}
+$$
+
+```{r}
+y_a_posterior_exp = y_a_posterior[1]/y_a_posterior[2]
+y_b_posterior_exp = y_b_posterior[1]/y_b_posterior[2]
+
+y_a_posterior_var = y_a_posterior[1]/(y_a_posterior[2]^2)
+y_b_posterior_var = y_b_posterior[1]/(y_b_posterior[2]^2)
+```
+
+The expected value of the posterior of type A is `r round(y_a_posterior_exp,3)` and type B is `r round(y_b_posterior_exp,3)` .
+
+The variance of the posterior of type A is `r round(y_a_posterior_var,3)` and type B is `r round(y_b_posterior_var,3)` .
+
+```{r}
+y_a_int = qgamma(c(.025,.975), y_a_posterior[1], y_a_posterior[2])
+y_b_int = qgamma(c(.025,.975), y_b_posterior[1], y_b_posterior[2])
+```
+
+The 95% quantile based confidence interval for $\theta_A$ is (`r round(y_a_int[1],3)`,`r round(y_a_int[2],3)`) and $\theta_B$ is (`r round(y_b_int[1],3)`,`r round(y_b_int[2],3)`)
+
+b\)
+
+```{r}
+y_b_n_seq = seq(1,50,1)
+y_b_n_posterior_exp_seq = (12*y_b_n + y_b_sum)/(y_b_n_seq + y_b_n)
+df = tibble(y_b_n_seq, y_b_n_posterior_exp_seq)
+df |> 
+  ggplot(aes(y_b_n_seq, y_b_n_posterior_exp_seq)) +
+  geom_point() +
+  geom_abline(b = y_a_posterior_exp)
+```
+
+3.4)
+
+3.7)
+
+3.12)
