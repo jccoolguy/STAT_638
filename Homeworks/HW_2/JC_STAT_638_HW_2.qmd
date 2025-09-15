@@ -291,7 +291,9 @@ $$
 
 ii\)
 
-We can identify this as being proportional to $\frac{3}{4} \text{beta(17,36)}+\frac{1}{4}\text{beta}(23,30)$.
+We can identify the roots of two beta distributions, however their coefficients are unclear.
+
+My initial idea is this being proportional to $\frac{3}{4} \text{beta(17,36)}+\frac{1}{4}\text{beta}(23,30)$, but the weights seem off.
 
 iii\)
 
@@ -313,12 +315,232 @@ The mode is close to the mode from the beta(2,8) prior, this makes sense because
 
 e\)
 
-A general formula would be:
+A general formula would be, working off the notes where it covered a poisson example:
+
+Given a prior of $p(\theta)=\sum_{j=1}^m k_jf_j(\theta)$ where $k_1,…k_m$ are the weights we would have a posterior of:
 
 $$
-w_i \text{gamma}(a_1+\sum_{i=1}^n y_i,
+p(\theta|Y) = \sum_{j=1}^m \tilde{k_j}\tilde{f_j(\theta)},\tilde{k_j}=k_jc_j/c,c=\sum_{j=1}^m k_j c_j, \tilde{f_j(\theta)p(Y|\theta)/c_j},c_j=\int f_j(\theta)p(y|\theta)d\theta
 $$
 
-3.7)
+This part confused me a bit, I'm not super sure how the mixture is updated after data is observed.
+
+# 3.7)
+
+a\)
+
+Given a sampling distribution being binomial, a uniform prior distribution leads to a posterior distribution of:
+
+$$
+p(\theta|y) \sim \text{beta}(1+y,1+n-y),\text{beta}(3,14)
+$$
+
+Then the mean, mode and s.d. of $\theta$ is:
+
+$$
+E[\theta|y]=\frac{a+y}{a+b+n} \quad \text{mode}[\theta|y]=\frac{a+y-1}{a+b+n-2} \quad SD[\theta|y]=\sqrt{\frac{E[\theta|y]E[1-\theta|y]}{a+b+n+1}}
+$$
+
+```{r}
+#data
+n = 15
+y = 2
+#priors
+a = 1
+b = 1
+
+#posterior statistics
+expected = (a + y)/(a + b + n)
+mode     = (a + y - 1)/(a + b + n - 2)
+sd       = sqrt(expected*(1-expected)/(a + b + n + 1))
+```
+
+| Mean                   | Mode               | Standard Dev    |
+|------------------------|--------------------|-----------------|
+| `r round(expected,3)`  | `r round(mode,3)`  | `r round(sd,3)` |
+
+```{r}
+theta = seq(0,1,.005)
+post_denstiy = dbeta(theta, shape1 = a + y, shape2 = b + n - y)
+df = tibble(theta,post_denstiy)
+df |> 
+  ggplot(aes(x = theta, y= post_denstiy)) +
+  geom_line() +
+  labs(x = "Theta", y = "", title = "Posterior Density")
+```
+
+b\)
+
+i\.
+
+We need to assume that $Y_1$ and $Y_2$ are independent given $\theta$.
+
+ii\.
+
+We assume that the sampling distribution $Pr(Y_2|\theta)$ is binomial.
+
+$$
+Pr(Y_2=y_2|Y_1=2)=\int_{0}^1 {n_2 \choose y_2} \theta^{y_2}(1-\theta)^{n_2-y_2}\frac{\Gamma(17)}{\Gamma(3)\Gamma(14)}\theta^{2} (1-\theta)^{13} d\theta
+$$
+
+$$
+={n_2 \choose y_2} \frac{\Gamma(17)}{\Gamma(3)\Gamma(14)}\int_0^1 \theta^{y_2+2}(1-\theta)^{n_2+13-y_2}d\theta
+$$
+
+iii\.
+
+Then I believe since that integral must integrate to 1 we can use the calculus trick from page 33 of the textbook, then:
+
+$$
+p(Y_2=y_2|Y_1=2)={n_2 \choose y_2} \frac{\Gamma(17)}{\Gamma(3) \Gamma(14)}\int_0^1 \theta^{y_2+2}(1-\theta)^{n_2+13-y_2}d\theta={n_2 \choose y_2} \frac{\Gamma(17)}{\Gamma(3) \Gamma(14)}\frac{\Gamma(y_2+3)\Gamma(n_2+14-y_2)}{\Gamma(n_2+14-y_2)}
+$$
+
+c\)
+
+```{r}
+n_2 = 278
+p_y2_given_y1 = function(y_2){
+  #return(gamma(y_2 + 1)* gamma(n_2 + 13 - y_2)/(gamma(n_2 + 14)))
+  return(choose(n_2,y_2)*(1/beta(3,14))*beta(y_2 + 3, n_2 + 14 - y_2))
+}
+y_2_seq = seq(0,278,1)
+p_y2_given_y1_seq = p_y2_given_y1(y_2_seq)
+
+df = tibble(y_2_seq,p_y2_given_y1_seq)
+
+df |> 
+  ggplot(aes(x = y_2_seq, y = p_y2_given_y1_seq)) +
+  geom_col() +
+  labs(x = "y2", y = "", title = "Pr(Y2 = y2|Y1 = 2)")
+```
+
+```{r}
+y_2_given_y_1_mean = sum(df$p_y2_given_y1_seq*y_2_seq)
+y_2_given_y_1_sd   = sqrt(sum(df$p_y2_given_y1_seq*y_2_seq^2) 
+                          - y_2_given_y_1_mean^2)
+```
+
+| Mean                            | SD                            |
+|---------------------------------|-------------------------------|
+| `r round(y_2_given_y_1_mean,3)` | `r round(y_2_given_y_1_sd,3)` |
+
+d\)
+
+```{r}
+theta_hat = 2/15
+mle_seq = dbinom(y_2_seq,n_2,theta_hat)
+df = tibble(theta_hat, mle_seq)
+df |> 
+  ggplot(aes(x = y_2_seq, y = mle_seq)) +
+  geom_col() +
+  labs(x = "y2",y = "", title = "Pr(Y2=y2|Theta = 2/15)")
+```
+
+```{r}
+mle_mean = theta_hat*n_2
+mle_sd   = sqrt(n_2*theta_hat*(1 - theta_hat))
+```
+
+| Mean                  | SD                  |
+|-----------------------|---------------------|
+| `r round(mle_mean,3)` | `r round(mle_sd,3)` |
+
+The biggest difference between the two methods is the variability of our predictions.
+
+In the Bayesian approach we are factoring in the very small sample size used to give an initial idea of what $\theta$ could be. This allows us to properly allow for much more error in the prediction of $y_2$.
+
+In the approach where we accept the MLE of $\theta$ we end up with a much tighter distribution of predicted $y_2$ values.
+
+If I was to choose a distribution for $Y_2$ to make predictions I would certainly choose the Bayesian approach, the initial proportion was based on such a small group of students that it would be inappropriate to not factor in the large amount of error we have in our estimate of $\theta$ , the population proportion.
 
 3.12)
+
+a\)
+
+When the sampling distribution of Y is $\text{binomial}(n,\theta)$ the Jeffery's prior is $\text{Beta}(.5,.5)$ as developed in the notes on slide 37. Which is:
+
+$$
+p_J(\theta)=\frac{\Gamma(1)}{\Gamma(.5)\Gamma(.5)}\theta^{-.5}(1-\theta)^{-.5}
+$$
+
+b\)
+
+We start with:
+
+$$
+p(y|\psi)= {y \choose n}e^{\psi y}(1+e^{\psi})^{-n}
+$$
+
+Then we take the log (dropping terms we know will drop out after the first derivative):
+
+$$
+\log[p(y|\psi)]=\psi y-n\log(1+e^\psi)
+$$
+
+Then we take the first derivative with respect to $\psi$:
+
+$$
+\log(\frac{\delta}{\delta \psi}p(y|\psi))=y-n \frac{e^\psi}{1+e^\psi}
+$$
+
+Then we take the second derivative with respect to $\psi$:
+
+$$
+\log(\frac{\delta}{\delta \psi^2}p(y|\psi))=-n \frac{e^{\psi}}{(1+e^\psi)^2}
+$$
+
+Then we take the negative expected value:
+
+$$
+-E[\log(\frac{\delta}{\delta \psi^2}p(y|\psi))]=n \frac{e^\psi}{(1+e^\psi)^2}
+$$
+
+We then get the Jeffery's prior for $\psi$ by taking the square root:
+
+$$
+p_{J}(\psi)=[n \frac{e^\psi}{(1+e^\psi)^2}]^{1/2}
+$$ c)
+
+The prior distribution from a) is:
+
+$$
+p_J(\theta)=\frac{\Gamma(1)}{\Gamma(.5)\Gamma(.5)}\theta^{-.5}(1-\theta)^{-.5}
+$$
+
+We then apply the change of variables formula:
+
+$$
+p_\psi(\psi)=p_J(h(\psi)) \times| \frac{dh}{d\psi}|
+$$
+
+Where $h(\psi)=\frac{e^\psi}{1+e^\psi},$ $|\frac{dh}{d\psi}|=\frac{e^\psi}{(1+e^\psi)^2}$ and $p_J(h(\psi))=\frac{\Gamma(1)}{\Gamma(.5)\Gamma(.5)}[\frac{e^\psi}{1+e^\psi}(1-\frac{e^\psi}{1+e^\psi})]^{-1/2}$.
+
+Then (using c as a constant to avoid repedition):
+
+$$
+p_{\psi}(\psi)=c[\frac{e^\psi}{1+e^\psi}(1-\frac{e^\psi}{1+e^\psi})]^{-1/2}\frac{e^\psi}{(1+e^\psi)^2}
+$$
+
+Then we manipulate the right most term:
+
+$$
+p_{\psi}(\psi)=c[\frac{e^\psi}{1+e^\psi}(1-\frac{e^\psi}{1+e^\psi})]^{-1/2} [\frac{(1+e^\psi)^4}{e^{2\psi}}]^{-1/2}
+$$
+
+$$
+p_{\psi}(\psi)=c[\frac{(1+e^\psi)^3}{e^\psi}(1-\frac{e^\psi}{1+e^\psi})]^{-1/2}
+$$
+
+$$
+p_{\psi}(\psi)=c[\frac{(1+e^\psi)^3}{e^\psi}-\frac{1}{(1+e^\psi)^2}]^{-1/2}
+$$
+
+$$
+p_{\psi}(\psi)=c[\frac{(1+e^\psi)^5-e^\psi}{e^\psi(1+e^\psi)^2}]^{-1/2}
+$$
+
+$$
+p_{\psi}(\psi)=c[\frac{e^\psi(1+e^\psi)^2}{(1+e^\psi)^5-e^\psi}]^{1/2}
+$$
+
+I'd continue further, but I'm not sure how I'd be able to get rid fo the $e^{5\psi}$ that will pop up, I think I made an algebra mistake somewhere.
