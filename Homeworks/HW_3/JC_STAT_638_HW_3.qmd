@@ -1,0 +1,14 @@
+---
+title: "STAT 638 HW 3"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+# 3.8)
+
+a\)
+
+# 3.9)
+
+# 3.14)
