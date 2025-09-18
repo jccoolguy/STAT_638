@@ -9,6 +9,43 @@ editor: visual
 
 a\)
 
+In order to represent the long-run frequency we want to use a prior that has a strong weight.
+
+So, let's choose $n = 1000$ where the weighted mixture of beta distributions is equivalent to $1000$ observations worth of information.
+
+For 20% of coins they behave symmetrically. So we would choose $a + b=1000=$, $a = 500,b=500$. So:
+
+$$
+\text{beta(500,500)}
+$$
+
+$$
+
+$$ For 40% of coins they give a frequency of heads around 1/3. So we would choose $a + b = 1000,a=1000/3,b=2000/3$. So:
+
+$$
+\text{beta}(1000/3,2000/3)
+$$
+
+For the remaining 40% of coins they give a frequency of heads around 2/3. So we would choose $a+b=1000,a=2000/3,b=1000/3$. So :
+
+$$
+\text{beta(2000/3/1000)}
+$$
+
+In total we have the prior distribution of:
+
+$$
+\theta \sim \frac{1}{5}\text{beta}(500,500)+\frac{2}{5}\text{beta}(1000/3,2000/3)+\frac{2}{5}\text{beta(2000/3,1000/3)}
+$$
+
+```{r}
+theta = seq(0,1,.001)
+prior = 1/5*dbeta(theta, 500, 500) + 2/5*dbeta(theta, 1000/3,2000/3) +
+  2/5*dbeta(theta, 2000/3,1000/3)
+plot(theta,prior)
+```
+
 # 3.9)
 
 # 3.14)
