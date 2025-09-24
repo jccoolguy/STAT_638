@@ -5,7 +5,7 @@ format: pdf
 editor: visual
 ---
 
-4.1)
+# 4.1)
 
 Given that the prior for $\theta_2$ is uniform, its posterior would be $\text{beta}(1+30,1+50-30)$. Given the prior for $\theta_1$ is uniform, its posterior would be $\text{beta(1+57,1+100-57)}$.
 
@@ -19,15 +19,17 @@ theta_2.mc <- rbeta(50000, a + sy2, b + n2 - sy2)
 plot(density(theta_1.mc - theta_2.mc))
 ```
 
-The estimate of $Pr( \theta_1 < \theta_2|\text{data,prior})$ is the observed proportion of times where $\theta_1<\theta_2$ in our Monte Carlo sample.
+$Pr( \theta_1 < \theta_2|\text{data,prior})$ is the observed proportion of times where $\theta_1<\theta_2$ in our Monte Carlo sample.
 
 ```{r}
 t_1_less_t_2 = mean(theta_1.mc<theta_2.mc)
 ```
 
-In this case our estimate is `r t_1_less_t_2`.
+In this sample we have `r t_1_less_t_2`.
 
-4.2)
+# 4.2)
+
+a\)
 
 ```{r}
 set.seed(101)
@@ -72,3 +74,58 @@ plot(x = n0, y = t_b_less_t_a_seq, ylab = "P(Theta B < Theta A)", type = "l")
 ```
 
 The conclusions clearly depend a lot on the selection of the prior, this makes it very important to understand how much weight we intend on placing onto our prior beliefs and checking to see how different prior beliefs would impact the posterior inference.
+
+c\)
+
+a\)
+
+To obtain $Pr(\tilde{Y}_{B}<\tilde{Y}_A|y_A,y_B)$ we get the Monte Carlo sample of $\theta_B,\theta_A$ and then we use those samples to perform a Monte Carlo sample using the poisson distribution given each $\theta$ sample.
+
+```{r}
+set.seed(95)
+y_a = c(12,9,12,14,13,13,15,8,15,6)
+y_b = c(11,11,10,9,9,8,7,10,6,8,8,9,7)
+sy1 <- sum(y_a); n_a <- 10
+sy2 <- sum(y_b); n_b <- 13
+a_a <- 120; b_a <- 10
+a_b <- 12;  b_b <- 1
+
+theta_a.mc <- rgamma(100000, a_a + sy1, b_a + n_a)
+theta_b.mc <- rgamma(100000, a_b + sy2, b_b + n_b)
+
+y_a.mc <- rpois(100000, theta_a.mc)
+y_b.mc <- rpois(100000, theta_b.mc)
+```
+
+Now that we have Monte Carlo samples $\tilde{Y}_A$ and $\tilde{Y}_B$ we check the proportion of times we see $\tilde{Y}_{B(i)}<\tilde{Y}_{A(i)}$.
+
+```{r}
+y_b_lt_y_a = mean(y_b.mc < y_a.mc)
+```
+
+We have $Pr(\tilde{Y}_{B}<\tilde{Y}_A|y_A,y_B)=$ `r y_b_lt_y_a`.
+
+b\)
+
+Similarly to before, we perform the same procedure over varying choices of $n_0$.
+
+```{r,cache=TRUE}
+set.seed(10)
+n0 = seq(1,5000,1)
+y_b_lt_y_a_seq = rep(0,5000)
+for(i in 1:length(y_b_lt_y_a_seq)){
+theta_a.mc <- rgamma(10000, a_a + sy1, b_a + n_a)
+theta_b.mc <- rgamma(10000, 12*n0[i] + sy2,n0[i] + b_b)
+y_a.mc <- rpois(10000, theta_a.mc)
+y_b.mc <- rpois(10000, theta_b.mc)
+y_b_lt_y_a_seq[i] = mean(y_b.mc < y_a.mc)
+}
+```
+
+Below is a plot of the probabilities over varying $n_0$:
+
+```{r}
+plot(x = n0, y = y_b_lt_y_a_seq, ylab = "P(Y B < Y A)", type = "l")
+```
+
+Similarly to before, the probability is very sensitive to the choice of $n_0$, as $n_0$ increases we are basically ignoring the observed data entirely and only relying on the prior. Its important that we choose a prior carefully.
