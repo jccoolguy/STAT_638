@@ -1,0 +1,53 @@
+---
+title: "Practice Exam 1"
+format: html
+editor: visual
+---
+
+5\)
+
+```{r}
+data <- c(4.8,4.9,5.8,5.9,5.8,
+          6.1,6.5,7.5,7.7,8.2,
+          9.1,9.2)
+n <- length(data)
+a = 2
+b = 10
+a_2 = a + n; b_2 = b + n*mean(data)
+```
+
+6\)
+
+```{r}
+qgamma(c(.025,.975),16,65)
+hpd
+```
+
+7\)
+
+```{r}
+library(HDInterval)
+x = rgamma(10000000, 16, 65)
+hdi(x, credMass = 0.95)
+```
+
+8\)
+
+```{r}
+sd = sqrt(16/(65^2))
+```
+
+9\)
+
+```{r}
+theta.post=rgamma(50000, 16, rate= 65)
+ytilde = rexp(50000, theta.post)
+term1 = as.numeric(ytilde > 8)
+mean(term1)
+```
+
+10\)
+
+```{r}
+mean(ytilde)
+```
