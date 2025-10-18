@@ -1,0 +1,148 @@
+---
+title: "STAT 638 Homework 5"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+4.6)
+
+In order to understand what prior $\gamma = \log \frac{\theta}{1-\theta}$ will have given a uniform distribution of $\theta$ we need to find $p_{\gamma}(\gamma)$. This is:
+
+$$
+p_{\gamma}(\gamma)=p_{\theta}(h(\gamma)) \times |\frac{dh}{d\gamma}|
+$$
+
+Where $h(\gamma)$ is the inverse of $\gamma=g(\theta)=\log \frac{\theta}{1-\theta}$.
+
+After some algebra we have $h(\gamma)=\frac{e^\gamma}{1+e^\gamma}$.
+
+We can find the first derivative more easily if rewrite $h(\gamma)$ as:
+
+$$
+h(\gamma)=\frac{1}{e^{-\gamma}+1}
+$$
+
+Then we have:
+
+$$
+\frac{dh}{d\gamma}=\frac{1}{e^\gamma(1+e^{-\gamma})^2}
+$$
+
+Since the uniform prior is placed on $\theta$ we have $p_{\theta}(\theta)=1$ for all $\theta$ . So the prior $p_{\gamma}(\gamma)$ is:
+
+$$
+p_{\gamma}(\gamma)=\frac{1}{e^{\gamma}(1+e^{-\gamma})^2}
+$$
+
+```{r}
+gamma = seq(-10,10,.01)
+density = 1/(exp(gamma)*(1 + exp(-gamma))^2)
+plot(gamma, density, xlab = "Gamma", ylab = "Density", main = "Prior on Gamma")
+```
+
+We can see that this prior is clearly informative about $\gamma$ .
+
+4.8)
+
+Reading Data:
+
+```{r}
+bach <- read.csv("bach.csv")
+no_bach <- read.csv("nobach.csv")
+```
+
+Monte Carlo:
+
+```{r}
+set.seed(2)
+a <- 2; b <- 1
+sy1 = sum(bach); n1 <- dim(bach)[1]
+sy2 = sum(no_bach); n2 <- dim(no_bach)[1]
+
+theta1.mc <- rgamma(5000, a + sy1, b + n1)
+theta2.mc <- rgamma(5000, b + sy2, b + n2)
+y1.mc <- rpois(5000, theta1.mc)
+y2.mc <- rpois(5000, theta2.mc)
+```
+
+Plotting:
+
+```{r}
+par(mfrow = c(1,2))
+y1.ppd = table(y1.mc)/length(y1.mc)
+y2.ppd = table(y2.mc)/length(y2.mc)
+plot(y1.ppd, xlab = "Ya", ylab = "",main = "PPD of Ya", ylim = c(0,.45))
+plot(y2.ppd, xlab = "Yb", ylab = "",main = "PPD of Yb", ylim = c(0,.45))
+```
+
+b\)
+
+$\theta_B -\theta_A$ confidence interval:
+
+```{r}
+theta_diff = theta2.mc - theta1.mc
+quantile(theta_diff,probs = c(.025,.975))
+```
+
+$\widetilde{Y}_B - \widetilde{Y}_A$:
+
+```{r}
+y_diff = y2.mc - y1.mc
+quantile(y_diff,probs = c(.025,.975))
+```
+
+Although the hypothesis $\theta_B-\theta_A=0$ is rejected at a p-value of .05 we see that $Y_B-Y_A$ does have 0 included in its 95% probability interval. One main difference between the two populations is the fact that significantly more men with a bachelors degree are predicted to have no children than men without bachelors degrees. The population of men without a bachelors degree also has a longer and fatter tail than men with bachelors, they are more likely to have larger families.
+
+It seems that the population of men with bachelors degrees may be best fit by a zero inflated poisson model which can account for the high probability placed on zero kids.
+
+c\)
+
+Plotting a comparison:
+
+```{r}
+library(tidyverse)
+library(reshape2)
+
+ed_b = table(no_bach)/dim(no_bach)[1]
+pois_b = dpois(x = seq(0,10),lambda = 1.4)
+x = seq(0,8)
+ed_b = c(ed_b,0,0)
+pois_b = pois_b[1:9]
+df = data.frame(x, ed_b, pois_b)
+df2 = melt(df,id.var = 'x')
+
+df2 |> 
+  ggplot(aes(x = x, y = value, fill = variable)) +
+  geom_bar(stat = 'identity', position = 'dodge',width = .3) +
+  scale_fill_discrete(name = "", labels = c("Empirical","Poisson(1.4)")) +
+  labs(title = "Empirical vs Poisson",x = "Number of Children")
+```
+
+We can see a large discrepancy between the two distributions at the number of children equal to 0 and 1. The poisson distribution expects around 25% of men without bachelors degree to have no children while the observed data is about 35%. The poisson distribution expects 35% of men without bachelors degrees to have one child, while the observed data is about 20%. These two deviations are enough to conclude that this model is not a good fit.
+
+d\)
+
+Simulation:
+
+```{r}
+set.seed(99)
+counts = matrix(0, nrow = 5000, ncol = 2,dimnames = list(c(),c("Zeros","Ones")))
+for(i in 1:length(theta2.mc)) {
+  poisson_pull = rpois(218,theta2.mc[i])
+  counts[i,"Zeros"] <-  sum(poisson_pull == 0)
+  counts[i,"Ones"] <-  sum(poisson_pull == 1)
+}
+```
+
+Plot:
+
+```{r}
+observed_zeros = sum(no_bach$Count == 0)
+observed_ones = sum(no_bach$Count == 1)
+plot(counts[,"Zeros"],counts[,"Ones"], ylim = c(40,110),
+     xlab = "Zeros",ylab = "Ones")
+points(observed_zeros,observed_ones,col = "red")
+```
+
+The observed data is the red point on this plot. We can see how none of the simulated data is close to what we are seeing in the actual data set. This makes it clear that the Poisson model is not a good choice to model this data set. Instead we should consider other models, such as the zero inflated Poisson model.
