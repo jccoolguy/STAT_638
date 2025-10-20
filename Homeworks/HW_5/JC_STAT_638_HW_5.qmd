@@ -146,3 +146,77 @@ points(observed_zeros,observed_ones,col = "red")
 ```
 
 The observed data is the red point on this plot. We can see how none of the simulated data is close to what we are seeing in the actual data set. This makes it clear that the Poisson model is not a good choice to model this data set. Instead we should consider other models, such as the zero inflated Poisson model.
+
+5.5)
+
+a\)
+
+The reparameterized normal model is:
+
+$$
+p(y|\theta,\psi)=\sqrt{\frac{\psi}{2\pi}}e^{-1/2\psi(y-\theta)^2}
+$$
+
+To get the log likelihood we first take the log:
+
+$$
+\log(p(y|\theta,\psi))=\frac{1}{2}\log(\psi)-\frac{1}{2}\log(2\pi)-\frac{1}{2}\psi(y_i-\theta)^2
+$$
+
+Then we sum over all $y_i$:
+
+$$
+l(\theta,\psi|y)=\frac{n}{2}\log(\psi)-\frac{2}{n}\log(2 \pi)-\frac{1}{2}\psi\sum_{i=1}^n
+(y_i-\theta)^2$$
+
+b\)
+
+We are looking for a probability density where:
+
+$$
+\log(p_U(\theta,\psi))=\frac{1}{2}\log(\psi)-\frac{1}{2n}\psi\sum_{i=1}^n(y_i-\theta)^2+c
+$$
+
+Using our tip we can rewrite as:
+
+$$
+\log(p_U(\theta,\psi))=\frac{1}{2}\log(\psi)-\frac{1}{2n}\psi(\sum_{i=1}^n(y_i-\bar{y})^2)-\frac{1}{2}\psi(\theta-\bar{y})^2+c
+$$
+
+Then using $\log(p_U(\theta,\psi))=\log(p_U(\theta|\psi))+\log(p_U(\psi))$ we can say that:
+
+$$
+p_U(\theta|\psi)\propto e^{-1/2\psi(\theta-\bar{y})^2}
+$$
+
+We can identify that as $p(\theta|\psi) \sim \text{normal}(\bar{y},1/\psi)$.
+
+And we can also say:
+
+$$
+p_{U}(\psi) \propto \psi^{1/2}
+$$
+
+Which we can identify as $p(\psi)\sim\text{gamma(3/2,0)}$, which is improper but shouldn't serve to be a problem later.
+
+Having identified both parts of the distribution we can say that:
+
+$$
+p_{U}(\theta,\psi)=\text{normal-gamma}(\bar{y},1,3/2,0)
+$$
+
+c\)
+
+We write out $p_U(\theta,\psi)\times p(y_1,...,y_n|\theta,\psi)$ as:
+
+$$
+\psi^{n/2}e^{-\psi/2\sum_{i=1}^n(y_i-\theta)^2}\psi^{1/2}e^{-\psi/2(\theta-\bar{y})^2}
+$$
+
+That leaves us with:
+
+$$
+\psi^{(n+1)/2}e^{-\psi/2[\sum_{i=1}^n(y_i-\theta)^2-\psi/2(\theta-\bar{y})]}
+$$
+
+This joint density can be considered a posterior density, this is proportional to a normal gamma distribution.
