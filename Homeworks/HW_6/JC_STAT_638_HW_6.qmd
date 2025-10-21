@@ -1,0 +1,23 @@
+---
+title: "JC STAT 638 HW 6"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+# 6.1
+
+Reading Data:
+
+```{r}
+bach <- read.csv("bach.csv")
+no_bach <- read.csv("nobach.csv")
+```
+
+a\)
+
+Since $\theta_A$ and $\theta_B$ share the $\theta$ term they are dependent. A joint prior distribution is justified in cases where we cannot assume independence between parameters, such as here.
+
+b\)
+
+# 6.3
