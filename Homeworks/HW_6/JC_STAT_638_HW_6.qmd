@@ -223,3 +223,12 @@ p(c|y,x,z,\beta)=\exp[-c^2/2\tau^2_c] \times1\{c_{\min} <c<c_{\max}\}
 $$
 
 Which we can see is proportional to the normal density, but $c$ is constrained in the interval $(c_{\min},c_{\max})$.
+
+The same idea carries for $p(z_i|y,x,z_{-i},\beta,c)$:
+
+If we know about $y_i$ we have information that $z_i$ is above or below c. So:
+
+$$
+p(z_i|y,x,z_{-i},\beta,c)\propto\begin{cases}N(\beta x_i,1) & z_i>c  & y_i=1\\
+N(\beta x_i,1) & z_i \leq c  & y_i = 0\end{cases}
+$$
