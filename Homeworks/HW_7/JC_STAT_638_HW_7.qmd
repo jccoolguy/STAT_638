@@ -1,0 +1,8 @@
+---
+title: "STAT 638 HW 7"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+# 6.1)

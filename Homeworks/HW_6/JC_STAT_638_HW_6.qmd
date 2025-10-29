@@ -20,4 +20,152 @@ Since $\theta_A$ and $\theta_B$ share the $\theta$ term they are dependent. A jo
 
 b\)
 
-# 6.3
+First we obtain the joint distribution:
+
+$$
+p(\theta,y_{a},y_{b},\gamma)=p(y_a|\theta_a)p(y_{b}|\theta_b)p(\gamma)p(\theta)
+$$
+
+Where:
+
+$$
+p(y_a|\theta_a)=\theta_a^{y_a}e^{-n_a \theta_a}=\theta^{y_a}e^{-n_a\theta}
+$$
+
+$$
+p(y_b|\theta_b)=\theta_b^{y_b}e^{-n_b\theta_b}=\gamma^{y_b}\theta^{y_b}e^{-n_b(\theta \gamma)}
+$$
+
+$$
+p(\gamma)=\gamma^{a_{\gamma}-1}e^{-(b_\gamma) \gamma}
+$$
+
+$$
+p(\theta)=\theta^{a_{\theta}-1}e^{-(b_{\theta})\theta}
+$$
+
+Combined we have:
+
+$$
+p(\theta,y_{a},y_b,\gamma)=\theta^{y_a+y_n+a_{\theta}-1}\gamma^{ay-1}e^{-n_a\theta-n_b\theta-b_{\gamma}(\gamma)-b_{\theta}\theta}
+$$
+
+Then to obtain the form of the full conditional distribution of $\theta$ given $y_a,y_b,\gamma$ we treat all non-theta terms as constants and find the proportional density:
+
+$$
+p(\theta|y_a,y_b,\gamma) \propto \theta^{y_a+y_b+a_{\theta}-1} e^{-\theta(n_a+\gamma n_b+b_\theta)}
+$$
+
+Clearly the proportional density is $\text{gamma}(y_a+y_b+a_\theta,n_a+\gamma n_b+b_{\theta})$
+
+c\)
+
+We take the joint distribution and treat all non-gamma terms as constants to get the full conditional distribution of $\gamma$ given $y_a,y_b,\theta$:
+
+$$
+p(\gamma|y_a,y_b,\theta) \propto \gamma^{\alpha_{\gamma}+y_n-1}e^{-\gamma(n_b \theta+b_{\gamma})}
+$$
+
+Clearly the proportional density is $\text{gamma}(y_b+a_{y},n_b \theta+b \gamma)$
+
+d\)
+
+```{r}
+set.seed(10)
+#priors
+a_theta = 2
+b_theta = 1
+a_gamma = b_gamma = c(8,16,32,64,128)
+#data
+y_a = sum(bach)
+n_a = length(bach)
+y_b = sum(no_bach)
+n_b = length(no_bach)
+
+#gibbs sampling
+n_iter = 5000
+
+theta <- numeric(n_iter)
+gamma <- numeric(n_iter)
+theta_diff <- numeric(5)
+
+for (i in 1:length(a_gamma)){
+  gamma[1] <- 1
+  for(j in 2:n_iter){
+    theta[j] <- rgamma(1, shape = y_a + y_b + a_theta, 
+                       rate = n_a + n_b*gamma[j - 1] + b_theta)
+    gamma[j] <- rgamma(1, shape = y_b + a_gamma[i],
+                       rate = n_b*theta[j] + b_gamma[i])
+  }
+  theta_a <- theta
+  theta_b <- theta * gamma
+  theta_diff[i] <- mean(theta_b - theta_a)
+    
+}
+
+```
+
+```{r}
+plot(x = a_gamma, y = theta_diff, type = "b",
+     main = "Theta B - Theta A over different priors for gamma",
+     xlab = "a Gamma , b Gamma",
+     ylab = "Theta Difference")
+```
+
+As we make our prior on $\gamma$ stronger we can see that the difference we see between $\theta_B$ and $\theta_A$ tighten. This is because this prior is that of a relative rate $\theta_b/\theta_a$ equal to one, or in other words an assumption that the count of children has the same distribution regardless of whether the father holds a bachelor's degree.
+
+6.3)
+
+```{r}
+raw_divorce_data <- read.table("divorce.dat")
+df <- data.frame(age_diff = raw_divorce_data$V1, divorce = raw_divorce_data$V2)
+head(df)
+```
+
+a\)
+
+We only need information about $z,x$ to have all the information we need for $p(\beta|y,x,z,c)$ so we use the Bayes rule.
+
+$$p(\beta|y,x,z,c)=p(\beta|z,x)=p(z|\beta,x)p(\beta)$$
+
+We know that $\beta \sim \text{normal}(0,\tau^2_{B})$, so:
+
+$$
+p(\beta)\propto e^{-\beta^2/2\tau_b^2}
+$$
+
+We have:
+
+$$
+Z_i=\beta x_i+\epsilon_i
+$$
+
+We also know that $\epsilon_i \sim \text{i.i.d normal(0,1)}$, so:
+
+$$
+Z_i \sim N(\beta x_i,1)
+$$
+
+Then:
+
+$$
+p(z_i|\beta,x_i) \propto \exp[-\frac{1}{2} (z_i-\beta x_i)^2/1]
+$$
+
+Then over all $z_i$ we have:
+
+$$
+p(z|\beta,x) \propto \exp[-\frac{1}{2}\sum_{i=1}^n (z_i-\beta x_i)^2]
+$$
+
+So we end up with:
+
+$$
+p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}\sum_{i=1}^n(z_i-\beta_{x_i})^2 +\frac{\beta^2}{\tau_b^2}]
+$$
+
+After some more algebra we get to:
+
+$$
+p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}\frac{}{}]
+$$
