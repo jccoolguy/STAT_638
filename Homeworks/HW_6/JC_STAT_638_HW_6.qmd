@@ -114,7 +114,7 @@ plot(x = a_gamma, y = theta_diff, type = "b",
 
 As we make our prior on $\gamma$ stronger we can see that the difference we see between $\theta_B$ and $\theta_A$ tighten. This is because this prior is that of a relative rate $\theta_b/\theta_a$ equal to one, or in other words an assumption that the count of children has the same distribution regardless of whether the father holds a bachelor's degree.
 
-6.3)
+# 6.3)
 
 ```{r}
 raw_divorce_data <- read.table("divorce.dat")
@@ -161,11 +161,65 @@ $$
 So we end up with:
 
 $$
-p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}\sum_{i=1}^n(z_i-\beta_{x_i})^2 +\frac{\beta^2}{\tau_b^2}]
+p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}\sum_{i=1}^n(z_i-\beta{x_i})^2 +\frac{\beta^2}{\tau_b^2}]
 $$
 
 After some more algebra we get to:
 
 $$
-p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}\frac{}{}]
+p(\beta|y,x,z,c) \propto \exp[-\frac{1}{2}(\beta^2(\sum x_i^2 + \frac{1}{\tau_b^2})-2\beta \sum x_i z_i+ \sum z_i^2]
 $$
+
+This reduces to:
+
+$$
+p(\beta |z,x) \propto \exp[-\frac{1}{2 V_\beta}(\beta -\mu_\beta)^2]
+$$
+
+where $V_\beta=\frac{1}{\sum_ix_i^2+\frac{1}{\tau_\beta^2}},\mu_\beta=V_\beta \sum_{i} x_i z_i$ .
+
+So:
+
+$$
+\beta|x,y,z,c \sim N(\mu_B, V_B)
+$$
+
+b\)
+
+We have:
+
+$$
+p(c|y,x,z,\beta)=p(y|x,z,\beta ,c)p(c)
+$$
+
+Since we are assuming $c \sim N(0,\tau_c^2)$ we have:
+
+$$
+p(c) \propto \exp[-c^2/2\tau_c^2]
+$$
+
+Then we have to find the form of $p(y|x,z,\beta,c)$.
+
+We have $Y_i=\delta_{(c,\infty)}(Z_i)$ , which is an indicator function where if $Z_i>c$ we have $Y_i=1$ and if $Z_i \leq c$ we have $Y_i=0$. So:
+
+$$
+Y_i=1 \{Z_i > c\}
+$$
+
+Then, since we know each $Z_i$, we have some information about what $c$ is.
+
+For instance, if a $Y_i=1$ we know that $Z_i > c$ or equivalently $c < Z_i$.
+
+Similarly, if a $Y_i=0$ we know that $Z_i<c$ or equivalently $c>Z_i$.
+
+Then, for all $Z_i$ we know that:
+
+$$
+c_{\min}= \max[Z_i|Y_i=0], \quad c_{\max}=\min [Z_i|Y_i =1]
+$$ Then that leaves us with:
+
+$$
+p(c|y,x,z,\beta)=\exp[-c^2/2\tau^2_c] \times1\{c_{\min} <c<c_{\max}\}
+$$
+
+Which we can see is proportional to the normal density, but $c$ is constrained in the interval $(c_{\min},c_{\max})$.
