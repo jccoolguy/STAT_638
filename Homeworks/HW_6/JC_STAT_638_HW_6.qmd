@@ -229,6 +229,81 @@ The same idea carries for $p(z_i|y,x,z_{-i},\beta,c)$:
 If we know about $y_i$ we have information that $z_i$ is above or below c. So:
 
 $$
-p(z_i|y,x,z_{-i},\beta,c)\propto\begin{cases}N(\beta x_i,1) & z_i>c  & y_i=1\\
-N(\beta x_i,1) & z_i \leq c  & y_i = 0\end{cases}
+p(z_i|y,x,z_{-i},\beta,c) \propto \begin{cases} N(\beta x_i,1) & z_i>c  \quad y_i=1\\
+N(\beta x_i,1) & z_i \leq c  \quad y_i = 0 \end{cases}
 $$
+
+c\)
+
+```{r,cache=TRUE}
+set.seed(2)
+n <- dim(df)[1]
+x <- df$age_diff
+y <- df$divorce
+
+#Priors
+tau2_beta <- 16
+tau2_c <- 16
+tau_beta <- sqrt(tau2_beta)
+tau_c <- sqrt(tau2_c)
+
+#Initalization
+beta <- 0
+c <- 0
+z <- numeric(n)
+n_iter <- 20000
+beta_store <- numeric(n_iter)
+c_store <- numeric(n_iter)
+
+# Gibbs Sample
+for (iter in 1:n_iter) {
+  # Z sampling
+  mu <- beta * x
+  for (i in 1:n) {
+    if (y[i] == 1) {
+      a <- (c - mu[i]) / 1
+      u <- runif(1, pnorm(a), 1)
+      z[i] <- mu[i] + qnorm(u)
+    } else {
+      b <- (c - mu[i]) / 1
+      u <- runif(1, 0, pnorm(b))
+      z[i] <- mu[i] + qnorm(u)
+    }
+  }
+
+  # Beta sampling
+  V_beta <- 1 / (sum(x^2) + 1 / tau2_beta)
+  mu_beta <- V_beta * sum(x * z)
+  beta <- rnorm(1, mu_beta, sqrt(V_beta))
+
+  # C sampling
+  a <- if (any(y == 0)) max(z[y == 0]) else -Inf
+  b <- if (any(y == 1)) min(z[y == 1]) else Inf
+  lower <- pnorm((a - 0) / tau_c)
+  upper <- pnorm((b - 0) / tau_c)
+  u <- runif(1, lower, upper)
+  c <- 0 + tau_c * qnorm(u)
+
+  # storing
+  beta_store[iter] <- beta
+  c_store[iter] <- c
+}
+
+```
+
+```{r,fig.height = 10, fig.width = 8}
+par(mfrow = c(2,1))
+acf(beta_store, main = "ACF of beta")
+acf(c_store, main = "ACF of c")
+
+```
+
+We can see that both $\beta$ and $c$ seem to have poor mixing. The autocorrelation between samples close to each other is high and it takes about 40 lags for the autocorrelation to drop near zero. This would indicate that we may need to use more iterations to get good precision.
+
+d\)
+
+```{r}
+cat("Posterior mean of beta:", mean(beta_store), "\n")
+cat("95% credible interval for beta:", quantile(beta_store, c(0.025, 0.975)), "\n")
+cat("Pr(beta > 0 | data):", mean(beta_store > 0), "\n")
+```
