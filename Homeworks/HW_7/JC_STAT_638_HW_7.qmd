@@ -5,4 +5,105 @@ format: pdf
 editor: visual
 ---
 
-# 6.1)
+# 7.1)
+
+a\)
+
+The most obvious reason that $p_j$ cannot actually be a probability density for $(\theta,\Sigma)$ is that it does not depend on $\theta$.
+
+Since $p_j$ does not depend on $\theta$, it assigns equal probability mass across the interval $(-\infty,\infty)$. So if we were to integrate over the range of all possible $\theta$ the probabilities would sum to $\infty$ and not $1$, which clearly violates a fundamental rule for probability density functions, total probability must sum to 1.
+
+b\)
+
+We have:
+
+$$
+p_j(\theta,\Sigma|y_{1},...y_n) \propto p_{j}(\theta,\Sigma) \times p(y_1,...,y_n|\theta,\Sigma)
+$$
+
+With our assumption that $p(y_1,...y_n|\theta,\Sigma) \sim\text{Multivariate Normal}(\theta,\Sigma)$ we have:
+
+$$
+p(y_1,...,y_n|\theta,\Sigma)\propto |\Sigma|^{-n/2} \exp\{-\frac{1}{2}\sum_{i=1}^n(y_i-\theta)^{T} \Sigma^{-1}(y_i-\theta)\}
+$$
+
+So:
+
+$$
+p_{j}(\theta,\Sigma|y_1,...,y_n) \propto | \Sigma|^{-(n+p+2)/2} \exp\{-\frac{1}{2}\sum_{i=1}^n(y_i-\theta)^{T} \Sigma^{-1}(y_i-\theta)\}
+$$ For $p_J(\theta | \Sigma,y_1,...,y_n)$ we have:
+
+$$
+p_{J}(\theta|\Sigma,y_1,...,y_n) \propto \exp\{-\frac{1}{2}\sum_{i=1}^n(y_i-\theta)^{T} \Sigma^{-1}(y_i-\theta)\}
+$$
+
+This is clearly the $\text{Multivariate Normal}(\bar{y}, \frac{1}{n}\Sigma)$ distribution, any effect from the prior is ignored because it does not depend on $\theta$.
+
+For $p_{j}(\Sigma|y_1,...,y_n)$ its worth noticing that the prior $p_{j}(\Sigma)$ is $\text{inverse - Wishart}(1,0)$. Then we use the general result that was worked through in chapter 7:
+
+$$
+p_j(\Sigma|y_1,...,y_n) \sim \text{inverse-Wishart}(\nu_0+n,[S_{0}+S_{\theta}]^{-1})=\text{inverse-Wishart}(1+n,S_{\theta}^{-1})
+$$ Where $S_{\theta}=\sum_{i=1}^n (y_i-\theta)(y_i-\theta)^{T}$.
+
+# 7.3)
+
+Loading data:
+
+```{r}
+blue_crab = read.table("bluecrab.dat")
+blue_crab = data.frame(depth = blue_crab$V1, width = blue_crab$V2)
+
+orange_crab = read.table("orangecrab.dat")
+orange_crab = data.frame(depth = orange_crab$V1, width = orange_crab$V2)
+
+head(blue_crab);head(orange_crab)
+```
+
+Obtaining Posterior Distribution:
+
+```{r}
+library(mvtnorm)
+#priors
+mu_blue   = colMeans(blue_crab); mu_orange = colMeans(orange_crab)
+lambda_blue_0 = S_blue_0 = cov(blue_crab)
+lambda_orange_0 = S_orange_0 = cov(orange_crab)
+nu_0 = 4
+n    = 50
+theta_blue <- theta_orange <- matrix(0, nrow = 10000,ncol = 2)
+
+sigma_blue <- theta_orange <- sigma_orange <- matrix(nrow = 10000, ncol = 4)
+
+set.seed(10)
+for(s in 1:10000){
+  #theta
+  Ln_blue <- solve(solve(lambda_blue_0) + n*solve(S_blue_0))
+  mun_blue <- Ln_blue %*% (solve(lambda_blue_0)%*%mu_blue + 
+                             n*solve(S_blue_0)%*% mu_blue)
+  theta_blue[s,] <- rmvnorm(1, mun_blue, Ln_blue)
+  
+  Ln_orange <- solve(solve(lambda_orange_0) + n*solve(S_orange_0))
+  mun_orange <- Ln_orange %*% (solve(lambda_orange_0)%*%mu_orange + 
+                                 n*solve(S_orange_0) %*% mu_orange)
+  theta_orange[s,] <- rmvnorm(1, mun_orange, Ln_orange)
+  
+  #Sigma
+  Sn_blue <- S_blue_0 + 
+    (t(blue_crab) - theta_blue[s])%*% t(t(blue_crab) - theta_blue[s])
+  sigma_blue[s,] <- c(Sn_blue)
+  
+  Sn_orange <- S_orange_0 + 
+    (t(orange_crab) - theta_orange[s])%*% t(t(orange_crab) - theta_orange[s])
+  sigma_orange[s,] <- c(Sn_orange)
+
+}
+```
+
+$$
+\Lambda
+$$
+
+# 7.4)
+
+```{r}
+
+```
