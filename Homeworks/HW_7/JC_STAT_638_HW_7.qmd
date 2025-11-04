@@ -100,7 +100,7 @@ for(s in 1:10000){
 
 b\)
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 par(mfrow = c(1,2))
 
 plot(theta_blue[,1],theta_blue[,2],
@@ -151,4 +151,239 @@ Where $\Lambda_n=(\Lambda_0^{-1}+n \Sigma^{-1})^{-1},\mu_n =(\Lambda_0^{-1}+n \S
 
 I'd assume that $\mu=(32,28)$ representing the belief that men are generally a bit older when they get married.
 
-For $\Sigma$ I am less sure. I think a feasible range for men is $(20,44)$ so I choose a variance of 36, a feasible range for women might be a bit narrower so like $(22,34)$, so I choose a variance of 9. I expect that the ages would be quite correlated, so I choose $\rho=.7$.
+For $\Sigma$ I am less sure. I think a feasible range for men is $(20,44)$ so I choose a variance of 36, a feasible range for women might be a bit narrower so like $(22,34)$, so I choose a variance of 9. I expect that the ages would be quite correlated, so I choose $\rho=.7$. That would leave us with $\Sigma=\begin{bmatrix} 36 & 12.6 \\ 12.6 & 9\end{bmatrix}$.
+
+b\)
+
+```{r}
+mu_0 <- c(32,28)
+nu_0 <- 50
+sd_m <- 6
+sd_w <- 3
+corr <- .7
+sigma_mean <- matrix(c(sd_m^2,corr*sd_m*sd_w,corr*sd_m*sd_w,sd_w^2),
+                     ncol = 2)
+psi <- sigma_mean*(nu_0 - 2 - 1)
+
+```
+
+```{r, fig.width= 10, fig.height=10}
+set.seed(12)
+n <- 100
+num_datasets <- 4
+library(MASS)
+library(MCMCpack)
+par(mfrow = c(2,2))
+for(i in 1:num_datasets){
+  #Sigma Sample
+  sigma <- riwish(v = nu_0, S = psi)
+  
+  #Theta Sample
+  theta <- mvrnorm(1, mu = mu_0, Sigma = sigma)
+  
+  #Drawing sample from distribution
+  y <- mvrnorm(n, mu = theta, Sigma = sigma)
+  
+  plot(y[,1],y[,2],
+       xlab = "Age of Husband",
+       ylab = "Age of Wife",
+       xlim = c(10,80),
+       ylim = c(10,80))
+}
+```
+
+The distributions generally look good, but we can see that the wife age in the top right plot seems quite low. To remedy this I change $\rho=.8$ and increase the mean age of the wife to 30.
+
+```{r}
+mu_0 <- c(32,30)
+nu_0 <- 50
+sd_m <- 6
+sd_w <- 3
+corr <- .8
+sigma_mean <- matrix(c(sd_m^2,corr*sd_m*sd_w,corr*sd_m*sd_w,sd_w^2),
+                     ncol = 2)
+psi <- sigma_mean*(nu_0 - 2 - 1)
+```
+
+```{r, fig.width= 10, fig.height=10}
+set.seed(16)
+n <- 100
+num_datasets <- 4
+library(MASS)
+library(MCMCpack)
+par(mfrow = c(2,2))
+for(i in 1:num_datasets){
+  #Sigma Sample
+  sigma <- riwish(v = nu_0, S = psi)
+  
+  #Theta Sample
+  theta <- mvrnorm(1, mu = mu_0, Sigma = sigma)
+  
+  #Drawing sample from distribution
+  y <- mvrnorm(n, mu = theta, Sigma = sigma)
+  
+  plot(y[,1],y[,2],
+       xlab = "Age of Husband",
+       ylab = "Age of Wife",
+       xlim = c(10,80),
+       ylim = c(10,80))
+}
+```
+
+This looks closer to my beliefs.
+
+c\)
+
+```{r}
+agehw <- read.table("agehw.dat", header = TRUE)
+```
+
+```{r,cache=TRUE}
+set.seed(15)
+n <- dim(agehw)[1];theta_bar <- apply(agehw,2,mean)
+L0 <- diag(2)*1
+S0 <- sigma_mean
+sigma <- cov(agehw)
+THETA <- SIGMA <- NULL
+set.seed(1)
+for(s in 1:5000){
+  #theta update
+  Ln <- solve(solve(L0) + n*solve(sigma))
+  mun <- Ln %*%( solve(L0) %*% mu_0 + n * solve(sigma) %*% theta_bar)
+  theta <- rmvnorm(1, mean = c(mun), sigma = Ln)
+  #Sigma update
+  diff <- t(agehw) - c(theta)
+  Sn <- S0 + diff %*% t(diff)
+  sigma <- solve(rwish(nu_0 + n, solve(Sn)))
+  #Saving
+  THETA <- rbind(THETA, theta)
+  SIGMA <- rbind(SIGMA, c(sigma))
+}
+CORR <- SIGMA[,2]/sqrt(SIGMA[,1]*SIGMA[,4])
+```
+
+```{r,fig.height=14}
+par(mfrow = c(3,1))
+plot(density(THETA[,1]))
+plot(density(THETA[,2]))
+plot(density(CORR))
+```
+
+```{r}
+theta_CIs <- apply(THETA, 2, quantile, probs = c(0.025, 0.975))
+CORR_CI <- quantile(CORR, c(0.025, 0.975))
+cat("\n95% credible intervals for theta:\n")
+print(round(theta_CIs, 3))
+cat("95% CI for correlation:", round(CORR_CI, 3), "\n")
+```
+
+d\)
+
+i\.
+
+```{r}
+set.seed(25)
+n <- dim(agehw)[1];theta_bar <- apply(agehw,2,mean)
+S0 <- matrix(0,2,2)
+nu_0 = 0
+sigma <- cov(agehw)
+THETA <- SIGMA <- NULL
+for(s in 1:5000){
+  #theta update
+  theta <- rmvnorm(1, mean = theta_bar, sigma = sigma/n)
+  #Sigma update
+  diff <- t(agehw) - c(theta)
+  Sn <- S0 + diff %*% t(diff)
+  sigma <- solve(rwish(nu_0 + n, solve(Sn)))
+  #Saving
+  THETA <- rbind(THETA, theta)
+  SIGMA <- rbind(SIGMA, c(sigma))
+}
+CORR <- SIGMA[,2]/sqrt(SIGMA[,1]*SIGMA[,4])
+```
+
+```{r}
+theta_CIs <- apply(THETA, 2, quantile, probs = c(0.025, 0.975))
+CORR_CI <- quantile(CORR, c(0.025, 0.975))
+cat("\n95% credible intervals for theta:\n")
+print(round(theta_CIs, 3))
+cat("95% CI for correlation:", round(CORR_CI, 3), "\n")
+```
+
+ii\.
+
+```{r}
+set.seed(30)
+n <- dim(agehw)[1];theta_bar <- apply(agehw,2,mean)
+L0 <- cov(agehw)
+S0 <- cov(agehw)
+nu_0 = 4
+mu_0 = theta_bar
+sigma <- cov(agehw)
+THETA <- SIGMA <- NULL
+for(s in 1:5000){
+  #theta update
+  Ln <- solve(solve(L0) + n*solve(sigma))
+  mun <- Ln %*%( solve(L0) %*% mu_0 + n * solve(sigma) %*% theta_bar)
+  theta <- rmvnorm(1, mean = c(mun), sigma = Ln)
+  #Sigma update
+  diff <- t(agehw) - c(theta)
+  Sn <- S0 + diff %*% t(diff)
+  sigma <- solve(rwish(nu_0 + n, solve(Sn)))
+  #Saving
+  THETA <- rbind(THETA, theta)
+  SIGMA <- rbind(SIGMA, c(sigma))
+}
+CORR <- SIGMA[,2]/sqrt(SIGMA[,1]*SIGMA[,4])
+```
+
+```{r}
+theta_CIs <- apply(THETA, 2, quantile, probs = c(0.025, 0.975))
+CORR_CI <- quantile(CORR, c(0.025, 0.975))
+cat("\n95% credible intervals for theta:\n")
+print(round(theta_CIs, 3))
+cat("95% CI for correlation:", round(CORR_CI, 3), "\n")
+```
+
+iii\.
+
+```{r, cache=TRUE}
+set.seed(20)
+n <- dim(agehw)[1];theta_bar <- apply(agehw,2,mean)
+L0 <- diag(2)*10^5
+S0 <- diag(2)*1000
+nu_0 = 3
+mu_0 = c(0,0)
+sigma <- cov(agehw)
+THETA <- SIGMA <- NULL
+for(s in 1:5000){
+  #theta update
+  Ln <- solve(solve(L0) + n*solve(sigma))
+  mun <- Ln %*%( solve(L0) %*% mu_0 + n * solve(sigma) %*% theta_bar)
+  theta <- rmvnorm(1, mean = c(mun), sigma = Ln)
+  #Sigma update
+  diff <- t(agehw) - c(theta)
+  Sn <- S0 + diff %*% t(diff)
+  sigma <- solve(rwish(nu_0 + n, solve(Sn)))
+  #Saving
+  THETA <- rbind(THETA, theta)
+  SIGMA <- rbind(SIGMA, c(sigma))
+}
+CORR <- SIGMA[,2]/sqrt(SIGMA[,1]*SIGMA[,4])
+```
+
+```{r}
+theta_CIs <- apply(THETA, 2, quantile, probs = c(0.025, 0.975))
+CORR_CI <- quantile(CORR, c(0.025, 0.975))
+cat("\n95% credible intervals for theta:\n")
+print(round(theta_CIs, 3))
+cat("95% CI for correlation:", round(CORR_CI, 3), "\n")
+```
+
+e\)
+
+The confidence intervals for $\theta$ are extremely similar to each other in part d, they are quite different from my strong prior in part c. I severely underestimated the ages for both groups. The correlation intervals are all pretty similar however.
+
+My prior information was not helpful because it was not a good estimate of reality it seems, I was way off. Instead I would use the Jeffrey's prior to reflect that I do not have a prior information to add to the problem.
+
+If n was smaller I'd consider doing some research to get a reasonable prior to center $\mu$ , but I would avoid making it too strong.
