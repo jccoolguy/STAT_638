@@ -98,12 +98,57 @@ for(s in 1:10000){
 }
 ```
 
-$$
-\Lambda
-$$
+b\)
+
+```{r}
+par(mfrow = c(1,2))
+
+plot(theta_blue[,1],theta_blue[,2],
+     main = "Blue Crabs", xlab = "Theta 1", ylab = "Theta 2")
+
+plot(theta_orange[,1],theta_orange[,2],
+     main = "Orange Crabs", xlab = "Theta 1", ylab = "Theta 2")
+```
+
+The relationship between depth and width is similar in both groups, it is tighter for orange crabs however. Both groups have similar levels of depth, but orange crabs are generally wider.
+
+c\)
+
+```{r}
+par(mfrow = c(1,2))
+rho_blue = sigma_blue[,2]/sqrt(sigma_blue[,1]*sigma_blue[,4])
+rho_orange = sigma_orange[,2]/sqrt(sigma_orange[,1]*sigma_orange[,4])
+plot(density(rho_blue),
+     main = "Rho Blue")
+plot(density(rho_orange),
+     main = "Rho Orange")
+```
+
+The correlation is higher for the blue crabs as it is centered at .875 while it is centered at .775 for orange crabs. The distributions appear very similar outside of that shift.
+
+```{r}
+p_blue_lt_orange <- mean(rho_blue < rho_orange)
+p_blue_lt_orange
+```
+
+The probability that $\rho_{\text{blue}}<\rho_{\text{orange}}$ is `r p_blue_lt_orange`. The results suggest that the correlation between depth and width is stronger in the blue crabs.
 
 # 7.4)
 
-```{r}
+a\)
 
-```
+We can use:
+
+$$
+\theta|y_1,...,y_n,\Sigma \sim \text{Multivariate Normal(}\mu_n,\Lambda_n)
+$$
+
+$$
+\Sigma|y_1,...,y_n,\theta \sim \text{inverse -Wishart(}\nu_n,S_{n}^{-1})
+$$
+
+Where $\Lambda_n=(\Lambda_0^{-1}+n \Sigma^{-1})^{-1},\mu_n =(\Lambda_0^{-1}+n \Sigma^{-1})^{-1}(\Lambda_{0}^{-1} \mu_0+n \Sigma^{-1} \bar{y}).\nu_n=\nu_0+n,S_{n}=S_0+S_\theta$.
+
+I'd assume that $\mu=(32,28)$ representing the belief that men are generally a bit older when they get married.
+
+For $\Sigma$ I am less sure. I think a feasible range for men is $(20,44)$ so I choose a variance of 36, a feasible range for women might be a bit narrower so like $(22,34)$, so I choose a variance of 9. I expect that the ages would be quite correlated, so I choose $\rho=.7$.
