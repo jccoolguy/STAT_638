@@ -58,3 +58,107 @@ p(\mu|\theta_1,...,\theta_m,\sigma^2,\tau^2,y_{1},...,y_m)=p(\mu)p(\theta_1,...,
 $$
 
 This tells us only information from $\theta_1,...,\theta_j$ is necessary to know the posterior distribution of $\mu$. This makes sense based on the flow of information in the model. The data $y_{1},…,y_{m}$ flows to the subgroup average $\theta_1,...\theta_j$, then those subgroup averages flow up to $\mu$. This means that as long as we have the subgroup averages and the across group sampling variance we have all the information we need to make posterior inference about the overall mean $\mu$.
+
+# 8.3)
+
+a\)
+
+```{r}
+school_1 <- read.table("school1.dat")
+school_2 <- read.table("school2.dat")
+school_3 <- read.table("school3.dat")
+school_4 <- read.table("school4.dat")
+school_5 <- read.table("school5.dat")
+school_6 <- read.table("school6.dat")
+school_7 <- read.table("school7.dat")
+school_8 <- read.table("school8.dat")
+schools <- list()
+schools[[1]] <- school_1$V1
+schools[[2]] <- school_2$V1
+schools[[3]] <- school_3$V1
+schools[[4]] <- school_4$V1
+schools[[5]] <- school_5$V1
+schools[[6]] <- school_6$V1
+schools[[7]] <- school_7$V1
+schools[[8]] <- school_8$V1
+
+```
+
+```{r}
+#Priors
+mu_0 <- 7
+gamma_2_0 <- 5
+tau_2_0 <- 10
+eta_0 <- 2
+sigma_2_0 <- 15
+nu_0 <- 2
+
+#school details
+k <- length(schools)
+n_i <- sapply(schools, length)
+n_total <- sum(n_i)
+y_bar <- sapply(schools,mean)
+```
+
+```{r,cache=TRUE}
+niter <- 50000
+
+#gibbs sampling
+theta <- y_bar
+mu <- mean(theta)
+tau_2 <- var(theta)
+sigma_2 <- var(unlist(schools))
+
+trace_theta <- matrix(NA, nrow = niter, ncol = k)
+trace_mu <- numeric(niter)
+trace_tau2 <- numeric(niter)
+trace_sigma2 <- numeric(niter)
+
+id <- 0
+for(j in 1:niter){
+  for(i in 1:k){
+    
+    #Theta Sample
+    y_i <- schools[[i]]
+    n_i <- length(y_i)
+    ybar_i <- mean(y_i)
+    var_theta_i <- 1/(n_i/sigma_2 + 1/tau_2)
+    mean_theta_i <- var_theta_i * (n_i * ybar_i / sigma_2 + mu / tau_2)
+    theta[i] <- rnorm(1, mean_theta_i, sqrt(var_theta_i))
+  }
+  
+  #mu sample
+  var_mu <- 1 / (k / tau_2 + 1 / gamma_2_0)
+  mean_mu <- var_mu * (sum(theta) / tau_2 + mu_0 / gamma_2_0)
+  mu <- rnorm(1, mean_mu, sqrt(var_mu))
+  
+  #sigma^2 sample
+  ssq <- 0
+  for (i in 1:k) ssq <- ssq + sum((schools[[i]] - theta[i])^2)
+  post_nu <- nu_0 + n_total
+  post_scale_sigma <- (nu_0*sigma_2_0 + ssq) / 2
+  sigma_2 <- 1/rgamma(1, shape = post_nu/2, scale = post_scale_sigma)
+  
+  #tau^2 sample
+  ssq_theta <- sum((theta - mu)^2)
+  post_eta <- eta_0 + k
+  post_scale_tau <- (eta_0 * tau_2_0 + ssq_theta) / 2
+  tau_2 <- 1/rgamma(1, shape = post_eta/2, scale = post_scale_tau)
+  
+  #Saving values
+  id <- id + 1
+  trace_theta[id,] <- theta
+  trace_mu[id]     <- mu
+  trace_tau2[id]   <- tau_2
+  trace_sigma2[id] <- sigma_2
+}
+```
+
+Assessing stationarity:
+
+```{r, fig.width=10, fig.height=18}
+par(mfrow = c(3,1))
+acf(trace_mu)
+acf(trace_sigma2)
+acf(trace_tau2)
+```
