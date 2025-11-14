@@ -1,0 +1,60 @@
+---
+title: "STAT 638 HW 8"
+author: "Jack Cunningham"
+format: pdf
+editor: visual
+---
+
+# 8.1)
+
+a\)
+
+$Var(y_{i,j}|\mu,\tau^2)$ would be bigger than $Var(y_{i,j}|\theta_i,\sigma^2)$, this is because we expect samples from the same fixed group to be more alike than a sample from a more heterogeneous population. For example, we would expect students in the same school to be more alike than students at different schools.
+
+b\)
+
+I would expect $Cov(y_{i_1,j},y_{i_2,j}|\theta_j,\sigma^2)$ to be zero since we know that $y_{1,j},...,y_{n_j,j}|\theta_j,\sigma^2$ are independent of each other. In other words if we know $\theta_j,\sigma%2$ we already have the information about the sampling distribution of subgroup $j$.
+
+On the other hand $Cov(y_{i_1,j},y_{i_2,j}|\mu,\tau)$ to be positive. This is because each observation gives us information about the subgroup $j$ . For example, if we see one student in a certain class scored higher than average on a national test we get some information about other students from the same class.
+
+c\)
+
+I found it helpful to write out $Y_{ij}=\theta_j+e_{ij}$ where $e_{ij} \sim \text{i.i.d. }N(0,\sigma^2)$
+
+$$
+Var[y_{ij}|\theta_i,\sigma^2]=Var(\theta_i+e_{ij}|\theta_i)=\sigma^2
+$$
+
+$$
+Var[y_{ij}|\mu,\tau^2]=Var(\theta_j+e_{ij}|\mu,\tau^2)=\tau^2+\sigma^2
+$$
+
+$$
+Var[\bar{y}_{.,j}|\theta_i,\sigma^2]=Var[\theta_j+\sum_{i=1}^n \frac{e_{ij}}{n}|\theta_i,\sigma^2]=\sigma^2/n
+$$
+
+$$
+Var[\bar{y}_{.,j}|\mu,\tau^2]=Var[\theta_j+\sum_{i=1}^n \frac{e_{ij}}{n}|\mu,\tau^2]=\tau^2+\sigma^2/n
+$$
+
+$$
+Cov(y_{i_1,j},y_{i_2,j}|\theta_j,\sigma^2)=Cov(\theta_j+e_{i_1,j},\theta_j+e_{i_2,j})|\theta_j,\sigma^2=0
+$$
+
+$$
+Cov(y_{i_{1},j},y_{i_2,j}|\mu,\tau^2)=Cov(\theta_j+e_{i_1,j},\theta_{j}+e_{i_2,j})=Cov(\theta_j,\theta_j)=Var(\theta_j)=\tau^2
+$$
+
+d\)
+
+We start with the joint distribution:
+
+$$
+p(\mu,\theta_1,...,\theta_m,\sigma^2,\tau^2,y_1,...,y_m)=p(\mu)p(\theta_1,...,\theta_m|\mu,\tau^2)p(y_1,...,y_m|\theta_{1},...\theta_m,\sigma^2)
+$$ Then we condition on everything but $\mu$:
+
+$$
+p(\mu|\theta_1,...,\theta_m,\sigma^2,\tau^2,y_{1},...,y_m)=p(\mu)p(\theta_1,...,\theta_m|\mu,\tau^2)=p(\mu|\theta_1,...,\theta_m,\tau^2)
+$$
+
+This tells us only information from $\theta_1,...,\theta_j$ is necessary to know the posterior distribution of $\mu$. This makes sense based on the flow of information in the model. The data $y_{1},…,y_{m}$ flows to the subgroup average $\theta_1,...\theta_j$, then those subgroup averages flow up to $\mu$. This means that as long as we have the subgroup averages and the across group sampling variance we have all the information we need to make posterior inference about the overall mean $\mu$.
