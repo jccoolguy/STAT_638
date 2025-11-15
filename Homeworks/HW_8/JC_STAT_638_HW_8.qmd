@@ -254,7 +254,7 @@ theta_mins = apply(trace_theta, 1, min)
 mean(trace_theta[,7] == theta_mins)
 ```
 
-e)
+e)  
 
 ```{r, warning=FALSE,message=FALSE}
 library(tidyverse)
@@ -276,3 +276,5 @@ The comparison between the sample mean and posterior mean of $\mu$ is below:
 ```{r}
 paste("Sample Mean: ", round(mean(unlist(schools)),3),". Posterior mean of mu: ", round(mean(trace_mu),3))
 ```
+
+Although the differences between $\bar{y}$ and $E[\theta_{post}]$ are slight, the general trend is that if the sample size of the school is smaller than typical the posterior mean is pulled a bit closer to the posterior mean of $\mu_{post}$. Extreme values also seem to be pulled further than values close to the posterior mean of $\mu_{post}$.
