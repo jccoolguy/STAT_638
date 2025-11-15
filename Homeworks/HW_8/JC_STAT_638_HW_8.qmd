@@ -101,13 +101,14 @@ y_bar <- sapply(schools,mean)
 ```
 
 ```{r,cache=TRUE}
+set.seed(10)
 niter <- 50000
 
 #gibbs sampling
 theta <- y_bar
 mu <- mean(theta)
 tau_2 <- var(theta)
-sigma_2 <- var(unlist(schools))
+sigma_2 <- mean(sapply(schools, var))
 
 trace_theta <- matrix(NA, nrow = niter, ncol = k)
 trace_mu <- numeric(niter)
@@ -137,13 +138,13 @@ for(j in 1:niter){
   for (i in 1:k) ssq <- ssq + sum((schools[[i]] - theta[i])^2)
   post_nu <- nu_0 + n_total
   post_scale_sigma <- (nu_0*sigma_2_0 + ssq) / 2
-  sigma_2 <- 1/rgamma(1, shape = post_nu/2, scale = post_scale_sigma)
+  sigma_2 <- 1/rgamma(1, post_nu/2, post_scale_sigma)
   
   #tau^2 sample
   ssq_theta <- sum((theta - mu)^2)
   post_eta <- eta_0 + k
   post_scale_tau <- (eta_0 * tau_2_0 + ssq_theta) / 2
-  tau_2 <- 1/rgamma(1, shape = post_eta/2, scale = post_scale_tau)
+  tau_2 <- 1/rgamma(1, post_eta/2, post_scale_tau)
   
   #Saving values
   id <- id + 1
@@ -156,9 +157,122 @@ for(j in 1:niter){
 
 Assessing stationarity:
 
-```{r, fig.width=10, fig.height=18}
+```{r, fig.width=10, fig.height=18, results= "hide"}
+library(astsa)
 par(mfrow = c(3,1))
-acf(trace_mu)
-acf(trace_sigma2)
-acf(trace_tau2)
+acf1(trace_mu, plot = TRUE)
+acf1(trace_sigma2, plot = TRUE)
+acf1(trace_tau2, plot = TRUE)
+```
+
+The ACF quickly tends to zero for all three indicating that we have good convergence.
+
+```{r, warning=FALSE}
+library(coda)
+paste("mu effective size:", round(effectiveSize(trace_mu)))
+paste("sigma^2 effective size:", round(effectiveSize(trace_sigma2)))
+paste("tau^2 effective size:", round(effectiveSize(trace_tau2)))
+```
+
+The effective sample sizes also look good.
+
+b\)
+
+```{r}
+paste("Posterior Mu:", round(mean(trace_mu),3), "95% CR:",round(quantile(trace_mu,c(.025)),3), round(quantile(trace_mu,c(.975)),3))
+
+paste("Posterior Sigma^2:", round(mean(trace_sigma2),3), 
+      "95% CR:", round(quantile(trace_sigma2,c(.025)),3), 
+      round(quantile(trace_sigma2,c(.975)),3))
+
+paste("Posterior Tau^2:", round(mean(trace_tau2),3), "95% CR:",
+      round(quantile(trace_tau2,c(.025)),3), round(quantile(trace_tau2,c(.975)),3))
+```
+
+```{r, fig.height = 16, fig.width=10}
+mu_prior <- rnorm(1000000, mu_0, sd = sqrt(gamma_2_0))
+dinvgamma <- function(x, shape, scale){
+  dens <- ifelse(x > 0,
+                 (scale^shape/gamma(shape))*x^(-shape - 1)*exp(-scale /x),
+                 0
+  )
+}
+x_prior <- seq(0.0001, 120, .01)
+sigma_2_prior <- dinvgamma(x_prior, nu_0/2, ((nu_0 * sigma_2_0))/2)
+tau_2_prior <- dinvgamma(x_prior, eta_0/2, (eta_0 * tau_2_0) / 2)
+
+par(mfrow = c(3,2))
+plot(density(mu_prior), main = "Prior Mu", xlim = c(0,15))
+plot(density(trace_mu), main = "Posterior Mu" , xlim = c(0,15))
+
+plot(x_prior, sigma_2_prior, type = "l", main = "Prior Sigma^2")
+plot(density(trace_sigma2), main = "Posterior Sigma^2", xlim = c(5, 25))
+
+plot(x_prior, tau_2_prior, main = "Prior Tau^2", type = "l")
+plot(density(trace_tau2),  main = "Posterior Tau^2",xlim = c(0,40))
+```
+
+The prior for $\mu$ is a normal distribution centered at 7 with $\gamma_0^2$ chosen to keep almost all its density greater than 0. After receiving the data we see the center shift right slightly, at around 7.5. We see the distribution tighten around that value, with almost all density between 5 and 10.
+
+The prior for $\sigma^2$ peaks near 15 and has a very long right tail. After receiving data we see the distribution come close to symmetry, centered still around 15 but with almost all mass between 10 and 20.
+
+The prior for $\tau^2$ peaks near 10 and also has a very long right tail. Unlike the posterior for $\sigma^2$ this distribution keeps the right tail with visible density extending out to 30. The location of the peak is similar to the prior.
+
+The posterior shows that we have learned a great deal about the feasible range for each statistic from the data. This helps us understand our uncertainty more accurately.
+
+c\)
+
+```{r,fig.width=10, fig.height=12}
+par(mfrow = c(2,1))
+set.seed(20)
+R_posterior = trace_tau2/(trace_sigma2 + trace_tau2)
+sigma_2_prior_sim = 1/rgamma(100000,nu_0/2, ((nu_0 * sigma_2_0))/2)
+tau_2_prior_sim   = 1/rgamma(100000,eta_0/2, (eta_0 * tau_2_0) / 2 )
+R_prior = tau_2_prior_sim/(sigma_2_prior_sim + tau_2_prior_sim)
+plot(density(R_prior), main = "R prior", xlim = c(0,1))
+plot(density(R_posterior), main = "R posterior", xlim = c(0,1))
+```
+
+The R statistic represents the portion of variance coming from across school variation from all the variation in the data. The prior represents a slightly informed view that the across school variation makes up less of the total variation than the between school variation. This makes sense, considering we selected $\sigma_0^2=15$ and $\tau^2_0=10$.
+
+After the data is observed we see that the posterior is centered around .2, saying that 20% of total variance is coming from across school variation and 80% is coming from between school variation. The distribution ranges from 0 to about .8 with a long right tail.
+
+If we were wondering if across school variation makes up a smaller portion than between school variation, we can test this by seeing how many times $R_{post}$ is less than .5. This probability is `r mean(R_posterior > .5)`. Evidence suggests that most variance in the data is coming from between school variation.
+
+d\)
+
+To obtain the posterior probability that $\theta_7<\theta_6$ we can simply check the portion of times $\theta_{7,post}$ is less than $\theta_{6,post}$.
+
+```{r}
+mean(trace_theta[,7] < trace_theta[,6])
+```
+
+Similarly we can find the posterior probability that $\theta_7$ is the smallest of all $\theta$'s by checking the portion of times $\theta_7$ is the minimum of all $\theta$ in each posterior sample.
+
+```{r}
+theta_mins = apply(trace_theta, 1, min)
+mean(trace_theta[,7] == theta_mins)
+```
+
+e)
+
+```{r, warning=FALSE,message=FALSE}
+library(tidyverse)
+theta_post_exp <- apply(trace_theta, 2, mean)
+school_labels = rep(1:8,times = 2)
+type = rep(c("Y Bar", "Theta Posterior"), each = 8)
+values = c(y_bar, theta_post_exp)
+
+comparison_df <- tibble(school_labels, values, type)
+
+comparison_df |> ggplot(aes(x = school_labels, y = values, fill = type)) +
+  geom_col(position = position_dodge(width = 1), width = .4) + 
+  labs(title = "Comparison", x = "School")
+
+```
+
+The comparison between the sample mean and posterior mean of $\mu$ is below:
+
+```{r}
+paste("Sample Mean: ", round(mean(unlist(schools)),3),". Posterior mean of mu: ", round(mean(trace_mu),3))
 ```
