@@ -1,0 +1,50 @@
+---
+title: "JC STAT 638 HW 9"
+format: html
+editor: visual
+---
+
+# 9.1)
+
+```{r}
+swim <- read.table("swim.dat")
+head(swim)
+```
+
+Pivoting the data:
+
+```{r}
+library(tidyverse)
+colnames(swim) <- c(2,4,6,8,10,12)
+swim_long <- swim |> 
+  mutate(Swimmer = row_number()) |> 
+  pivot_longer(
+    cols = -Swimmer,
+    names_to = "Week",
+    values_to = "Time"
+  ) |> 
+  mutate(Week = as.integer(Week))
+head(swim_long)
+  
+```
+
+a\)
+
+Since competitive times for this age group range from 22 to 24 seconds we choose $N(23,1)$ as the prior for the intercept term $\beta_0$.
+
+There are two weeks between each swim so there wouldn't be any effect of fatigue on the swimmers. So for a selection $\beta_1$ I chose $N(0,.1^2)$ because we wouldn't expect much change over a 12 week window.
+
+I also assume that $\beta_0$ and $\beta_1$ are independent.
+
+For variance I selected a weak prior as we don't have information about how much error to expect. So for this I used the unit information prior, taking $\nu_0$ and $\sigma_0^2=\hat{\sigma}^2_{ols}$, where $\hat{\sigma}_{ols}^2$ I get from fitting the linear model $\text{Time = Swimmer + Week +}e$.
+
+```{r}
+lin_fit <- lm(Time ~ Week + Swimmer, data = swim_long)
+summary(lin_fit)
+```
+
+So our selection of $\sigma_0^2=.3346^2$.
+
+```{r}
+sigma2_0 <- sum(resid(lin_fit)^2)/(24 - 3);sigma2_0
+```
