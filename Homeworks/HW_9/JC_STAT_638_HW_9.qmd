@@ -39,7 +39,7 @@ There are two weeks between each swim so there wouldn't be any effect of fatigue
 
 I also assume that $\beta_0$ and $\beta_1$ are independent.
 
-For variance I selected a weak prior as we don't have information about how much error to expect. So for this I used the unit information prior, taking $\nu_0$ and $\sigma_0^2=\hat{\sigma}^2_{ols}$, where $\hat{\sigma}_{ols}^2$ I get from fitting the linear model $\text{Time = } \beta_0 +\text{Week + Swimmer + }e$.
+For variance I selected a weak prior as we don't have information about how much error to expect. So for this I used the unit information prior, taking $\nu_0=1$ and $\sigma_0^2=\hat{\sigma}^2_{ols}$, where $\hat{\sigma}_{ols}^2$ I get from fitting the linear model $\text{Time = } \beta_0 +\text{Week + Swimmer + }e$.
 
 ```{r}
 lin_fit <- lm(Time ~ Week + Swimmer, data = swim_long)
