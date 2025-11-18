@@ -32,7 +32,7 @@ a\)
 
 Since competitive times for this age group range from 22 to 24 seconds we choose $N(23,1)$ as the prior for the intercept term $\beta_0$.
 
-There are two weeks between each swim so there wouldn't be any effect of fatigue on the swimmers. So for a selection $\beta_1$ I chose $N(0,.1^2)$ because we wouldn't expect much change over a 12 week window.
+There are two weeks between each swim so there wouldn't be any effect of fatigue on the swimmers. So for a selection $\beta_1$ I chose $N(0,.1)$ because we wouldn't expect much change over a 12 week window.
 
 I also assume that $\beta_0$ and $\beta_1$ are independent.
 
@@ -48,3 +48,86 @@ So our selection of $\sigma_0^2=.3346^2$.
 ```{r}
 sigma2_0 <- sum(resid(lin_fit)^2)/(24 - 3);sigma2_0
 ```
+
+Getting posterior predictive distributions:
+
+```{r, cache=TRUE}
+set.seed(10)
+library(MASS)
+#Priors
+m0 <- c(23, 0)
+V0 <- diag(c(1,.1))
+V0inv <- solve(V0)
+nu_0 <- 1
+
+predict_two_weeks <- function(df) {
+  y  <- df$Time
+  X  <- cbind(1, df$Week)
+  n  <- length(y)
+  
+  # Posterior parameters
+  Vn_inv <- V0inv + t(X)%*%X
+  Vn     <- solve(Vn_inv)
+  mn     <- Vn %*% (V0inv %*% m0 + t(X)%*%y)
+  
+  an <- nu_0 + n/2
+  bn <- sigma2_0 + 0.5*( t(m0)%*%V0inv%*%m0 + t(y)%*%y - t(mn)%*%Vn_inv%*%mn )
+  
+  # Prediction
+  w_new <- max(df$Week) + 2
+  x_new <- c(1, w_new)
+  
+  # Sampling
+  S <- 10000
+  ypred <- numeric(S)
+  
+  for (s in 1:S) {
+    sigma2 <- 1 / rgamma(1, an, bn)  # Inv-gamma
+    beta   <- mvrnorm(1, mn, sigma2*Vn)
+    ypred[s] <- rnorm(1, x_new %*% beta, sqrt(sigma2))
+  }
+  
+  return(ypred)
+}
+
+pred_post_dist <- lapply(split(swim_long, swim_long$Swimmer), predict_two_weeks)
+```
+
+```{r}
+library(tidyverse)
+pred_df <- map2_df(pred_post_dist, 1:length(pred_post_dist),
+                          ~ tibble(
+                            swimmer = paste0("Swimmer ", .y),
+                            ypred   = .x
+                          ))
+pred_df |> 
+  ggplot(aes( x = ypred, color = swimmer)) +
+  geom_density(adjust = 2, size = 1) +
+  labs(
+    x = "Time",
+    y = "Posterior Predictive Density"
+  ) +
+  theme_bw()
+```
+
+b\)
+
+We find the swimmer with the longest time at each draw.
+
+```{r}
+S <- length(pred_post_dist[[1]])
+pred_mat <- do.call(cbind, pred_post_dist)
+slowest <- apply(pred_mat, 1, which.max)
+prob_slowest <- table(slowest)/S
+prob_slowest
+```
+
+If we were concerned only with not sending the slowest swimmer we would send the first swimmer. I think its worth looking at who the fastest runner is at each draw to see if that gives us the same result.
+
+```{r}
+fastest <- apply(pred_mat,1,which.min)
+prob_fastest <- table(fastest)/S
+prob_fastest
+```
+
+The first swimmer is most likely to have the fastest swim as well, I would recommend sending this swimmer to the competition.
