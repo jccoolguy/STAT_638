@@ -1,6 +1,6 @@
 ---
 title: "JC STAT 638 HW 9"
-format: html
+format: pdf
 editor: visual
 ---
 
@@ -13,7 +13,7 @@ head(swim)
 
 Pivoting the data:
 
-```{r}
+```{r,warning=FALSE,message=FALSE}
 library(tidyverse)
 colnames(swim) <- c(2,4,6,8,10,12)
 swim_long <- swim |> 
@@ -24,8 +24,11 @@ swim_long <- swim |>
     values_to = "Time"
   ) |> 
   mutate(Week = as.integer(Week))
-head(swim_long)
   
+```
+
+```{r}
+head(swim_long)
 ```
 
 a\)
@@ -36,7 +39,7 @@ There are two weeks between each swim so there wouldn't be any effect of fatigue
 
 I also assume that $\beta_0$ and $\beta_1$ are independent.
 
-For variance I selected a weak prior as we don't have information about how much error to expect. So for this I used the unit information prior, taking $\nu_0$ and $\sigma_0^2=\hat{\sigma}^2_{ols}$, where $\hat{\sigma}_{ols}^2$ I get from fitting the linear model $\text{Time = Swimmer + Week +}e$.
+For variance I selected a weak prior as we don't have information about how much error to expect. So for this I used the unit information prior, taking $\nu_0$ and $\sigma_0^2=\hat{\sigma}^2_{ols}$, where $\hat{\sigma}_{ols}^2$ I get from fitting the linear model $\text{Time = } \beta_0 +\text{Week + Swimmer + }e$.
 
 ```{r}
 lin_fit <- lm(Time ~ Week + Swimmer, data = swim_long)
@@ -102,7 +105,7 @@ pred_df <- map2_df(pred_post_dist, 1:length(pred_post_dist),
                           ))
 pred_df |> 
   ggplot(aes( x = ypred, color = swimmer)) +
-  geom_density(adjust = 2, size = 1) +
+  geom_density(adjust = 2, linewidth = 1) +
   labs(
     x = "Time",
     y = "Posterior Predictive Density"
